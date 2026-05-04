@@ -1,0 +1,92 @@
+import { Router, Route, Switch, Redirect } from "wouter";
+import { useAuth } from "@clerk/clerk-react";
+import { useEffect } from "react";
+import { ThemeProvider } from "./components/theme-provider";
+import { Navbar } from "./components/layout/navbar";
+import { Footer } from "./components/layout/footer";
+import { Toaster } from "sonner";
+import { setTokenGetter } from "./lib/auth";
+
+// Pages
+import Landing from "./pages/Landing";
+import Builder from "./pages/Builder";
+import Templates from "./pages/Templates";
+import Dashboard from "./pages/Dashboard";
+import History from "./pages/History";
+import SettingsPage from "./pages/Settings";
+import Billing from "./pages/Billing";
+import Analytics from "./pages/Analytics";
+import Admin from "./pages/Admin";
+import Gallery from "./pages/Gallery";
+import Guide from "./pages/Guide";
+import SharePage from "./pages/Share";
+import PublicSession from "./pages/PublicSession";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import NotFound from "./pages/NotFound";
+import SignInPage from "./pages/SignIn";
+import SignUpPage from "./pages/SignUp";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function Protected({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Redirect to={`${BASE}/sign-in`} />;
+  return <>{children}</>;
+}
+
+function TokenSync() {
+  const { getToken } = useAuth();
+  useEffect(() => {
+    setTokenGetter(() => getToken());
+  }, [getToken]);
+  return null;
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <TokenSync />
+      <Router base={BASE}>
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <main className="flex-1">
+            <Switch>
+              <Route path="/" component={Landing} />
+              <Route path="/builder" component={Builder} />
+              <Route path="/templates" component={Templates} />
+              <Route path="/gallery" component={Gallery} />
+              <Route path="/guide" component={Guide} />
+              <Route path="/billing" component={Billing} />
+              <Route path="/share/:token" component={SharePage} />
+              <Route path="/p/:slug" component={PublicSession} />
+              <Route path="/privacy" component={Privacy} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
+              <Route path="/dashboard">
+                <Protected><Dashboard /></Protected>
+              </Route>
+              <Route path="/history">
+                <Protected><History /></Protected>
+              </Route>
+              <Route path="/settings">
+                <Protected><SettingsPage /></Protected>
+              </Route>
+              <Route path="/analytics">
+                <Protected><Analytics /></Protected>
+              </Route>
+              <Route path="/admin">
+                <Protected><Admin /></Protected>
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+      <Toaster richColors position="top-right" />
+    </ThemeProvider>
+  );
+}
