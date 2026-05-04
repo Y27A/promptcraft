@@ -49,7 +49,7 @@ export default function Templates() {
     },
   });
 
-  const categories = ["all", ...Array.from(new Set(templates.map((t: any) => t.category)))];
+  const categories = ["all", ...Array.from(new Set((templates as any[]).map((t) => t.category as string)))];
   const filtered = category === "all" ? templates : templates.filter((t: any) => t.category === category);
 
   return (

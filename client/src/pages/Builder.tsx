@@ -166,7 +166,7 @@ export default function Builder() {
 
   const activeContent = promptVersions
     ? activeVersion === 1 ? promptVersions.v1 : promptVersions.v2
-    : messages.findLast((m) => m.role === "assistant")?.content ?? "";
+    : [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
 
   const copyActive = () => {
     navigator.clipboard.writeText(activeContent);

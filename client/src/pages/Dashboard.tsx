@@ -62,7 +62,7 @@ export default function Dashboard() {
     },
   });
 
-  const categories = ["all", ...Array.from(new Set(prompts.map((p: any) => p.category)))];
+  const categories = ["all", ...Array.from(new Set((prompts as any[]).map((p) => p.category as string)))];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
