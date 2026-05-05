@@ -1,11 +1,11 @@
 import { Router, Route, Switch, Redirect } from "wouter";
-import { useAuth } from "@clerk/clerk-react";
 import { useEffect } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import { Navbar } from "./components/layout/navbar";
 import { Footer } from "./components/layout/footer";
 import { Toaster } from "sonner";
 import { setTokenGetter } from "./lib/auth";
+import { useSafeAuth, HAS_CLERK } from "./lib/clerk-safe";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -30,17 +30,17 @@ import SignUpPage from "./pages/SignUp";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function Protected({ children }: { children: React.ReactNode }) {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useSafeAuth();
   if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect to={`${BASE}/sign-in`} />;
   return <>{children}</>;
 }
 
 function TokenSync() {
-  const { getToken } = useAuth();
+  const { getToken } = useSafeAuth();
   useEffect(() => {
-    setTokenGetter(() => getToken());
-  }, [getToken]);
+    if (HAS_CLERK) setTokenGetter(() => getToken());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSearch, useLocation } from "wouter";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
 import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -20,8 +20,8 @@ type Message = { role: "user" | "assistant"; content: string; id: string };
 
 export default function Builder() {
   usePageTitle("Builder");
-  const { isSignedIn } = useUser();
-  const { getToken } = useAuth();
+  const { isSignedIn } = useSafeUser();
+  const { getToken } = useSafeAuth();
   const search = useSearch();
   const params = new URLSearchParams(search);
 

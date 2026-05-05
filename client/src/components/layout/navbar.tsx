@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { Zap, ChevronDown, LayoutDashboard, History, Settings, LogOut, ShieldCheck } from "lucide-react";
+import { Zap, ChevronDown, LayoutDashboard, History, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useSafeUser } from "@/lib/clerk-safe";
 
 const NAV_LINKS = [
   { href: "/builder", label: "Builder" },
@@ -15,7 +15,8 @@ const NAV_LINKS = [
 export function Navbar() {
   const [location] = useLocation();
   const [dropOpen, setDropOpen] = useState(false);
-  const { user } = useUser();
+  const { isSignedIn, user } = useSafeUser();
+  const firstName = user?.firstName;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -50,29 +51,31 @@ export function Navbar() {
 
         {/* Right */}
         <div className="flex items-center gap-2">
-          <SignedOut>
-            <Link
-              href="/sign-in"
-              className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/sign-up"
-              className="px-4 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 hover:scale-[1.02]"
-            >
-              Sign up
-            </Link>
-          </SignedOut>
-
-          <SignedIn>
+          {!isSignedIn ? (
+            <>
+              <Link
+                href="/sign-in"
+                className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="px-4 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 hover:scale-[1.02]"
+              >
+                Sign up
+              </Link>
+            </>
+          ) : (
             <div className="relative">
               <button
                 onClick={() => setDropOpen((v) => !v)}
                 className="flex items-center gap-2 rounded-full border border-border/50 px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
               >
-                <UserButton appearance={{ elements: { userButtonAvatarBox: "h-5 w-5" } }} />
-                <span className="hidden md:block">{user?.firstName}</span>
+                <div className="h-5 w-5 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-bold text-primary">
+                  {firstName?.[0] ?? "U"}
+                </div>
+                <span className="hidden md:block">{firstName}</span>
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </button>
               {dropOpen && (
@@ -98,7 +101,7 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          </SignedIn>
+          )}
         </div>
       </div>
     </header>

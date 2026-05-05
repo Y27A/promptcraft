@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useEffect, useState, useRef } from "react";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useSafeUser } from "@/lib/clerk-safe";
 import { Zap, BookOpen, Tag, Share2, Users, Star, ArrowRight, CheckCircle } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -48,6 +48,7 @@ const TESTIMONIALS = [
 
 export default function Landing() {
   usePageTitle("AI Prompt Engineering");
+  const { isSignedIn } = useSafeUser();
   const [demoIdx, setDemoIdx] = useState(0);
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
@@ -106,22 +107,25 @@ export default function Landing() {
             Describe what you want in plain language. Get two polished, production-ready prompts instantly — one detailed, one concise.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <SignedOut>
-              <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02] transition-all">
-                Start for free <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-3.5 text-base font-semibold hover:bg-muted transition-colors">
-                See examples
-              </Link>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
-                Open builder <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-3.5 text-base font-semibold hover:bg-muted transition-colors">
-                My dashboard
-              </Link>
-            </SignedIn>
+            {!isSignedIn ? (
+              <>
+                <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02] transition-all">
+                  Start for free <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-3.5 text-base font-semibold hover:bg-muted transition-colors">
+                  See examples
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
+                  Open builder <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-3.5 text-base font-semibold hover:bg-muted transition-colors">
+                  My dashboard
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -222,16 +226,15 @@ export default function Landing() {
         <div className="mx-auto max-w-2xl text-center rounded-2xl bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/10 border border-primary/20 p-12">
           <h2 className="mb-4 text-3xl font-bold">Start crafting better prompts today</h2>
           <p className="mb-8 text-muted-foreground">Free to start. No credit card required.</p>
-          <SignedOut>
+          {!isSignedIn ? (
             <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
               Create free account <ArrowRight className="h-4 w-4" />
             </Link>
-          </SignedOut>
-          <SignedIn>
+          ) : (
             <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
               Open builder <ArrowRight className="h-4 w-4" />
             </Link>
-          </SignedIn>
+          )}
         </div>
       </section>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useSafeAuth, useSafeUser } from "@/lib/clerk-safe";
 import { Link } from "wouter";
 import { Plus, BookOpen, Wand2, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +24,8 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 export default function Templates() {
   usePageTitle("Templates");
-  const { getToken } = useAuth();
+  const { getToken } = useSafeAuth();
+  const { isSignedIn } = useSafeUser();
   const [category, setCategory] = useState("all");
   const qc = useQueryClient();
 
@@ -60,8 +61,7 @@ export default function Templates() {
       </div>
 
       {/* My Templates */}
-      <SignedIn>
-        <section className="mb-12">
+      {isSignedIn && <section className="mb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Star className="h-5 w-5 text-primary" /> My Templates
@@ -78,17 +78,16 @@ export default function Templates() {
               {userTemplates.map((t: any) => <TemplateCard key={t.id} template={t} isUser />)}
             </div>
           )}
-        </section>
-      </SignedIn>
+        </section>}
 
-      <SignedOut>
+      {!isSignedIn && (
         <div className="mb-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
           <p className="font-medium mb-2">Sign up to save your own templates</p>
           <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
             <Plus className="h-4 w-4" /> Create free account
           </Link>
         </div>
-      </SignedOut>
+      )}
 
       {/* Curated templates */}
       <section>

@@ -6,6 +6,7 @@ import "./index.css";
 import App from "./App";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const hasValidClerkKey = typeof PUBLISHABLE_KEY === "string" && PUBLISHABLE_KEY.startsWith("pk_");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,12 +14,18 @@ const queryClient = new QueryClient({
   },
 });
 
+const tree = (
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY ?? "pk_test_placeholder"}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ClerkProvider>
+    {hasValidClerkKey ? (
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>{tree}</ClerkProvider>
+    ) : (
+      tree
+    )}
   </StrictMode>
 );
