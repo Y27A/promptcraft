@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useSearch, useLocation } from "wouter";
+import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap } from "lucide-react";
+import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -178,30 +178,38 @@ export default function Builder() {
   const quotaExhausted = !isSignedIn && trialUsed >= trialLimit;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden" style={{ background: "hsl(230 40% 4%)" }}>
       {/* Chat pane */}
-      <div className="flex flex-col flex-1 border-r border-border/50 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0" style={{ borderRight: "1px solid hsl(230 30% 12%)" }}>
         {/* Chat header */}
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid hsl(230 30% 12%)", background: "hsl(230 38% 5%)" }}>
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="font-semibold">PromptCraft</span>
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(248 95% 62%)", boxShadow: "0 0 12px hsl(248 95% 65% / 0.4)" }}>
+              <Zap className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="font-bold text-sm" style={{ color: "hsl(0 0% 92%)" }}>PromptCraft Builder</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMode(mode === "beginner" ? "advanced" : "beginner")}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                mode === "advanced"
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
+              className="px-3 py-1 rounded-full text-xs font-medium transition-all"
+              style={mode === "advanced" ? {
+                background: "hsl(248 95% 65% / 0.12)",
+                border: "1px solid hsl(248 95% 65% / 0.3)",
+                color: "hsl(248 95% 75%)",
+              } : {
+                background: "hsl(230 38% 9%)",
+                border: "1px solid hsl(230 30% 16%)",
+                color: "hsl(230 15% 55%)",
+              }}
             >
-              {mode === "advanced" ? "Advanced" : "Beginner"}
+              {mode === "advanced" ? "⚡ Advanced" : "Beginner"}
             </button>
             {isSignedIn && (
               <button
                 onClick={() => { setMessages([]); setSessionId(null); setPromptVersions(null); }}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all"
+                style={{ color: "hsl(230 15% 55%)", border: "1px solid hsl(230 30% 14%)" }}
               >
                 <Plus className="h-3 w-3" /> New
               </button>
@@ -213,21 +221,41 @@ export default function Builder() {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center py-16">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-                <TerminalSquare className="h-8 w-8 text-primary" />
+              <div className="relative mb-6">
+                <div className="absolute inset-0 rounded-3xl" style={{ background: "hsl(248 95% 65% / 0.15)", filter: "blur(20px)" }} />
+                <div className="relative h-16 w-16 rounded-3xl flex items-center justify-center" style={{ background: "hsl(248 95% 65% / 0.1)", border: "1px solid hsl(248 95% 65% / 0.2)" }}>
+                  <TerminalSquare className="h-7 w-7" style={{ color: "hsl(248 95% 72%)" }} />
+                </div>
               </div>
-              <h3 className="font-semibold text-lg mb-1">What do you want to prompt?</h3>
-              <p className="text-sm text-muted-foreground">Describe your goal in plain language</p>
+              <h3 className="font-bold text-lg mb-2" style={{ color: "hsl(0 0% 92%)" }}>What do you want to prompt?</h3>
+              <p className="text-sm max-w-xs leading-relaxed" style={{ color: "hsl(230 15% 50%)" }}>Describe your goal in plain English and get two production-ready prompts instantly</p>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {["Write a cold email", "Build a React hook", "Analyze my data", "Summarize this doc"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setInput(s)}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:brightness-110"
+                    style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(230 15% 62%)" }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                  msg.role === "user"
-                    ? "rounded-tr-sm bg-primary text-primary-foreground"
-                    : "rounded-tl-sm border border-border bg-muted"
-                }`}
+                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+                style={msg.role === "user" ? {
+                  background: "hsl(248 95% 62%)",
+                  color: "white",
+                  boxShadow: "0 4px 16px hsl(248 95% 65% / 0.25)",
+                } : {
+                  background: "hsl(230 38% 8%)",
+                  border: "1px solid hsl(230 30% 14%)",
+                  color: "hsl(0 0% 88%)",
+                }}
               >
                 {msg.role === "assistant" ? (
                   <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{msg.content || "Thinking…"}</ReactMarkdown>
@@ -242,35 +270,42 @@ export default function Builder() {
 
         {/* Quota banner */}
         {!isSignedIn && (
-          <div className={`px-4 py-2 text-xs text-center border-t border-border/50 ${quotaExhausted ? "bg-destructive/10 text-destructive" : "text-muted-foreground"}`}>
+          <div className="px-4 py-2 text-xs text-center" style={{
+            borderTop: "1px solid hsl(230 30% 12%)",
+            background: quotaExhausted ? "hsl(0 60% 12%)" : "hsl(230 38% 6%)",
+            color: quotaExhausted ? "hsl(0 70% 65%)" : "hsl(230 15% 50%)",
+          }}>
             {quotaExhausted
-              ? "Trial limit reached — Sign up for free to continue"
+              ? <>Trial limit reached — <Link href="/sign-up" className="font-semibold underline">Sign up free</Link> to continue</>
               : `${trialLimit - trialUsed} of ${trialLimit} free trials remaining`}
           </div>
         )}
 
         {/* Input */}
-        <div className="border-t border-border/50 p-3">
+        <div className="p-3" style={{ borderTop: "1px solid hsl(230 30% 12%)", background: "hsl(230 38% 5%)" }}>
           {showStyle && (
             <div className="flex gap-2 mb-2">
               <input
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="Domain (e.g. marketing)"
-                className="flex-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none"
+                style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(0 0% 88%)" }}
               />
               <input
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
                 placeholder="Tone (e.g. casual)"
-                className="flex-1 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none"
+                style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(0 0% 88%)" }}
               />
             </div>
           )}
           <div className="flex gap-2 items-end">
             <button
               onClick={() => setShowStyle((v) => !v)}
-              className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-2 rounded-xl transition-all"
+              style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(230 15% 55%)" }}
               title="Style options"
             >
               <ChevronDown className={`h-4 w-4 transition-transform ${showStyle ? "rotate-180" : ""}`} />
@@ -285,39 +320,52 @@ export default function Builder() {
               placeholder="Describe what you want to prompt…"
               disabled={quotaExhausted || streaming}
               rows={2}
-              className="flex-1 resize-none rounded-xl border border-border bg-muted px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex-1 resize-none rounded-xl px-3 py-2 text-sm focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(0 0% 90%)" }}
             />
             <button
               onClick={send}
               disabled={!input.trim() || streaming || quotaExhausted}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 hover:scale-[1.02] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "linear-gradient(135deg, hsl(248 95% 62%), hsl(268 95% 58%))", boxShadow: "0 0 20px hsl(248 95% 65% / 0.35)" }}
             >
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-1 text-center text-[10px] text-muted-foreground">Ctrl/Cmd + Enter to send</p>
+          <p className="mt-1.5 text-center text-[10px]" style={{ color: "hsl(230 15% 38%)" }}>Ctrl/Cmd + Enter to send</p>
         </div>
       </div>
 
       {/* Output pane */}
       <div className="hidden md:flex flex-col w-[45%] min-w-[340px] max-w-[600px]">
         {/* Output header */}
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-          <span className="font-semibold text-sm">Generated Output</span>
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid hsl(230 30% 12%)", background: "hsl(230 38% 5%)" }}>
           <div className="flex items-center gap-2">
-            <button onClick={copyActive} className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <Sparkles className="h-4 w-4" style={{ color: "hsl(248 95% 70%)" }} />
+            <span className="font-bold text-sm" style={{ color: "hsl(0 0% 92%)" }}>Generated Output</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={copyActive}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+              style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(230 15% 60%)" }}
+            >
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <Download className="h-3.5 w-3.5" /> Download
+              <button
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)", color: "hsl(230 15% 60%)" }}
+              >
+                <Download className="h-3.5 w-3.5" /> Export
               </button>
-              <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 w-28 rounded-lg border border-border bg-card shadow-lg py-1">
+              <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 w-28 rounded-xl py-1" style={{ background: "hsl(230 38% 8%)", border: "1px solid hsl(230 30% 15%)", boxShadow: "0 16px 40px hsl(0 0% 0% / 0.5)" }}>
                 {(["md", "txt", "json"] as const).map((fmt) => (
                   <button
                     key={fmt}
                     onClick={() => exportPrompt("prompt", activeContent, fmt)}
-                    className="block w-full px-3 py-1.5 text-left text-xs hover:bg-muted transition-colors"
+                    className="block w-full px-3 py-2 text-left text-xs transition-all hover:bg-white/5"
+                    style={{ color: "hsl(230 15% 65%)" }}
                   >
                     .{fmt}
                   </button>
@@ -329,18 +377,23 @@ export default function Builder() {
 
         {/* Version toggle */}
         {promptVersions && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50">
+          <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: "1px solid hsl(230 30% 12%)", background: "hsl(230 38% 5%)" }}>
             {([1, 2] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setActiveVersion(v)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  activeVersion === v
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border text-muted-foreground hover:text-foreground"
-                }`}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={activeVersion === v ? {
+                  background: "hsl(248 95% 62%)",
+                  color: "white",
+                  boxShadow: "0 0 16px hsl(248 95% 65% / 0.3)",
+                } : {
+                  background: "hsl(230 38% 9%)",
+                  border: "1px solid hsl(230 30% 16%)",
+                  color: "hsl(230 15% 55%)",
+                }}
               >
-                {v === 1 ? "Version 1 · Detailed" : "Version 2 · Normal"}
+                {v === 1 ? "V1 · Detailed" : "V2 · Concise"}
               </button>
             ))}
           </div>
@@ -349,16 +402,19 @@ export default function Builder() {
         {/* Output content */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeContent ? (
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-2xl p-5" style={{ background: "hsl(230 38% 7%)", border: "1px solid hsl(230 30% 14%)" }}>
               <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{activeContent}</ReactMarkdown>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-16">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted border border-border mb-4">
-                <TerminalSquare className="h-8 w-8 text-muted-foreground" />
+              <div className="relative mb-5">
+                <div className="absolute inset-0 rounded-3xl" style={{ background: "hsl(230 30% 14% / 0.5)", filter: "blur(15px)" }} />
+                <div className="relative h-14 w-14 rounded-3xl flex items-center justify-center" style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)" }}>
+                  <TerminalSquare className="h-6 w-6" style={{ color: "hsl(230 15% 45%)" }} />
+                </div>
               </div>
-              <h3 className="font-semibold mb-1">No prompt yet</h3>
-              <p className="text-sm text-muted-foreground">Send a message to generate your prompt</p>
+              <h3 className="font-semibold mb-1.5" style={{ color: "hsl(230 15% 65%)" }}>No output yet</h3>
+              <p className="text-xs" style={{ color: "hsl(230 15% 40%)" }}>Send a message to generate your prompt</p>
             </div>
           )}
         </div>

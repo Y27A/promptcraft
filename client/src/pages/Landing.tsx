@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useEffect, useState, useRef } from "react";
 import { useSafeUser } from "@/lib/clerk-safe";
-import { Zap, Tag, Share2, Star, ArrowRight, Sparkles, Terminal, Layers, Globe, Check, X, Plus, Minus, Code, Mail, BarChart3, PenLine } from "lucide-react";
+import { Zap, Tag, Share2, Star, ArrowRight, Sparkles, Terminal, Layers, Globe, Check, X, Plus, Minus, Code, Mail, BarChart3, PenLine, Bot, Cpu, Wand2, BookOpen } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ROTATING_WORDS = ["human.", "friend.", "expert.", "builder.", "creator."];
@@ -119,6 +119,17 @@ const STEPS = [
   { n: "03", title: "Copy, refine, reuse", desc: "Save to your library, share with one click, or keep refining until perfect.", icon: Sparkles },
 ];
 
+const WORKS_WITH = [
+  { label: "ChatGPT", icon: Bot },
+  { label: "Claude", icon: Sparkles },
+  { label: "Gemini", icon: Cpu },
+  { label: "Midjourney", icon: Wand2 },
+  { label: "Perplexity", icon: Globe },
+  { label: "Notion AI", icon: BookOpen },
+  { label: "Copilot", icon: Code },
+  { label: "Llama", icon: Terminal },
+];
+
 function FAQItem({ q, a, isOpen, onClick }: { q: string; a: string; isOpen: boolean; onClick: () => void }) {
   return (
     <div className="rounded-2xl overflow-hidden transition-all" style={{ background: "hsl(230 38% 8%)", border: `1px solid ${isOpen ? "hsl(248 95% 65% / 0.3)" : "hsl(230 30% 14%)"}` }}>
@@ -192,15 +203,15 @@ export default function Landing() {
     <div className="min-h-screen overflow-hidden">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative px-4 pt-24 pb-20 text-center bg-grid">
+      <section className="relative px-4 pt-24 pb-24 text-center bg-grid overflow-hidden">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-1/2 -translate-x-1/2 top-[-120px] h-[800px] w-[800px] rounded-full" style={{ background: "radial-gradient(circle, hsl(248 95% 65% / 0.18) 0%, transparent 70%)" }} />
-          <div className="absolute right-[-150px] top-[10%] h-[600px] w-[600px] rounded-full" style={{ background: "radial-gradient(circle, hsl(350 90% 62% / 0.12) 0%, transparent 70%)" }} />
-          <div className="absolute left-[-100px] bottom-0 h-[400px] w-[400px] rounded-full" style={{ background: "radial-gradient(circle, hsl(248 95% 65% / 0.1) 0%, transparent 70%)" }} />
+          <div className="absolute left-1/2 -translate-x-1/2 top-[-120px] h-[900px] w-[900px] rounded-full" style={{ background: "radial-gradient(circle, hsl(248 95% 65% / 0.15) 0%, transparent 65%)" }} />
+          <div className="absolute right-[-150px] top-[10%] h-[600px] w-[600px] rounded-full" style={{ background: "radial-gradient(circle, hsl(350 90% 62% / 0.1) 0%, transparent 70%)" }} />
+          <div className="absolute left-[-100px] bottom-0 h-[400px] w-[400px] rounded-full" style={{ background: "radial-gradient(circle, hsl(248 95% 65% / 0.08) 0%, transparent 70%)" }} />
         </div>
 
         <div className="relative mx-auto max-w-5xl">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium" style={{ background: "hsl(248 95% 65% / 0.1)", border: "1px solid hsl(248 95% 65% / 0.25)", color: "hsl(248 95% 75%)" }}>
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium" style={{ background: "hsl(248 95% 65% / 0.1)", border: "1px solid hsl(248 95% 65% / 0.25)", color: "hsl(248 95% 78%)" }}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "hsl(248 95% 65%)" }} />
               <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: "hsl(248 95% 65%)" }} />
@@ -254,7 +265,7 @@ export default function Landing() {
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-3 text-sm" style={{ color: "hsl(230 15% 55%)" }}>
+          <div className="flex items-center justify-center gap-3 text-sm mb-16" style={{ color: "hsl(230 15% 55%)" }}>
             <div className="flex -space-x-2">
               {["L","M","N","J","S"].map((l, i) => (
                 <div key={i} className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white ring-2 ring-[hsl(230_40%_4%)]" style={{ background: i % 2 === 0 ? "hsl(248 95% 62%)" : "hsl(350 90% 60%)" }}>
@@ -263,6 +274,68 @@ export default function Landing() {
               ))}
             </div>
             <span>Join <strong style={{ color: "hsl(0 0% 90%)" }}>2,400+</strong> builders already using PromptCraft</span>
+          </div>
+
+          {/* Hero mockup card */}
+          <div className="mx-auto max-w-2xl relative animate-float">
+            <div className="absolute inset-0 rounded-3xl" style={{ background: "radial-gradient(ellipse at center, hsl(248 95% 65% / 0.2), transparent 70%)", filter: "blur(30px)", transform: "translateY(20px) scaleX(0.9)" }} />
+            <div className="relative rounded-3xl overflow-hidden" style={{ background: "hsl(230 38% 7%)", border: "1px solid hsl(248 95% 65% / 0.2)", boxShadow: "0 24px 80px hsl(248 95% 65% / 0.12), 0 4px 24px hsl(0 0% 0% / 0.5)" }}>
+              {/* Window chrome */}
+              <div className="flex items-center gap-2 px-4 py-3" style={{ background: "hsl(230 40% 5%)", borderBottom: "1px solid hsl(230 30% 12%)" }}>
+                <div className="flex gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(0 72% 55%)" }} />
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(43 96% 52%)" }} />
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
+                </div>
+                <div className="flex-1 mx-3 rounded-full py-0.5 px-3 text-xs font-mono text-center" style={{ background: "hsl(230 38% 9%)", color: "hsl(230 15% 45%)" }}>
+                  promptcraft.ai/builder
+                </div>
+              </div>
+              {/* Content */}
+              <div className="p-5 space-y-3">
+                <div className="flex justify-end">
+                  <div className="rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm max-w-[80%]" style={{ background: "hsl(248 95% 62%)", color: "white" }}>
+                    Write a LinkedIn post about launching my startup
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-tl-sm px-4 py-3 text-xs font-mono leading-relaxed max-w-[88%]" style={{ background: "hsl(230 40% 5%)", border: "1px solid hsl(230 30% 14%)", color: "hsl(0 0% 85%)" }}>
+                    <span style={{ color: "hsl(248 95% 72%)" }}>### Version 1 · Detailed</span>
+                    <br />You are a B2B founder turned LinkedIn creator with 15K+ followers...
+                    <br /><br />
+                    <span style={{ color: "hsl(350 90% 68%)" }}>### Version 2 · Concise</span>
+                    <br />Write a LinkedIn launch post: excitement, one key metric, CTA.
+                  </div>
+                </div>
+                {/* Input bar */}
+                <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 mt-1" style={{ background: "hsl(230 40% 5%)", border: "1px solid hsl(230 30% 16%)" }}>
+                  <span className="flex-1 text-sm" style={{ color: "hsl(230 15% 38%)" }}>Describe your goal…</span>
+                  <div className="h-7 w-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(248 95% 62%)" }}>
+                    <Zap className="h-3.5 w-3.5 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── WORKS WITH TICKER ───────────────────────────────── */}
+      <section className="py-10 overflow-hidden" style={{ background: "hsl(230 38% 5%)", borderTop: "1px solid hsl(230 30% 10%)", borderBottom: "1px solid hsl(230 30% 10%)" }}>
+        <p className="text-center text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: "hsl(230 15% 38%)" }}>Works with any AI model</p>
+        <div className="relative">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 z-10" style={{ background: "linear-gradient(90deg, hsl(230 38% 5%), transparent)" }} />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 z-10" style={{ background: "linear-gradient(270deg, hsl(230 38% 5%), transparent)" }} />
+          <div className="flex animate-scroll-left" style={{ width: "max-content" }}>
+            {[...WORKS_WITH, ...WORKS_WITH].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={i} className="flex items-center gap-2.5 mx-6 shrink-0 rounded-xl px-5 py-2.5" style={{ background: "hsl(230 38% 8%)", border: "1px solid hsl(230 30% 14%)" }}>
+                  <Icon className="h-4 w-4" style={{ color: "hsl(248 95% 70%)" }} />
+                  <span className="text-sm font-medium" style={{ color: "hsl(230 15% 65%)" }}>{item.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
