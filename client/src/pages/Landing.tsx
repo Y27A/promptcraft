@@ -162,17 +162,20 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="px-4 py-24" style={{ background: "hsl(230 35% 7%)" }}>
+      <section className="px-4 py-24 border-t border-b" style={{ borderColor: "hsl(248 95% 65% / 0.12)", background: "hsl(230 38% 6%)" }}>
         <div className="mx-auto max-w-6xl">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "hsl(248 95% 65%)" }}>Features</p>
           <h2 className="mb-12 text-center text-3xl font-bold">Everything you need to prompt like a pro</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="rounded-2xl border border-border/50 bg-card p-6 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-                  <Icon className="h-5 w-5 text-primary" />
+              <div key={title} className="group rounded-2xl p-px transition-all" style={{ background: "linear-gradient(135deg, hsl(248 95% 65% / 0.2), hsl(230 38% 14%))" }}>
+                <div className="rounded-2xl h-full p-6" style={{ background: "hsl(230 38% 9%)" }}>
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "hsl(248 95% 65% / 0.15)", border: "1px solid hsl(248 95% 65% / 0.3)" }}>
+                    <Icon className="h-5 w-5" style={{ color: "hsl(248 95% 65%)" }} />
+                  </div>
+                  <h3 className="mb-2 font-semibold text-lg">{title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "hsl(230 15% 60%)" }}>{desc}</p>
                 </div>
-                <h3 className="mb-2 font-semibold text-lg">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -181,23 +184,30 @@ export default function Landing() {
 
       {/* How it works */}
       <section className="px-4 py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-12 text-3xl font-bold">How it works</h2>
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-0">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "hsl(350 90% 62%)" }}>Process</p>
+          <h2 className="mb-16 text-3xl font-bold">How it works</h2>
+          <div className="flex flex-col md:flex-row items-start gap-8 md:gap-4">
             {[
-              { n: "1", title: "Describe your goal", desc: "Type what you want in plain language — no prompt engineering required." },
-              { n: "2", title: "Get two versions", desc: "Receive a detailed long-form prompt and a concise version instantly." },
-              { n: "3", title: "Copy, refine, reuse", desc: "Save to your library, share with others, or keep refining until perfect." },
+              { n: "1", title: "Describe your goal", desc: "Type what you want in plain language — no prompt engineering required.", color: "hsl(248 95% 65%)" },
+              { n: "2", title: "Get two versions", desc: "Receive a detailed long-form prompt and a concise version instantly.", color: "hsl(350 90% 62%)" },
+              { n: "3", title: "Copy, refine, reuse", desc: "Save to your library, share with others, or keep refining until perfect.", color: "hsl(248 95% 65%)" },
             ].map((step, i) => (
-              <div key={step.n} className="flex flex-col md:flex-row items-center gap-4 flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 border-2 border-primary/30 text-xl font-bold text-primary mb-3">
+              <div key={step.n} className="flex flex-col md:flex-row items-center gap-6 flex-1">
+                <div className="flex flex-col items-center flex-1 px-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-extrabold text-white mb-4 shadow-lg" style={{ background: step.color, boxShadow: `0 0 24px ${step.color}55` }}>
                     {step.n}
                   </div>
-                  <h3 className="font-semibold mb-1">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.desc}</p>
+                  <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "hsl(230 15% 60%)" }}>{step.desc}</p>
                 </div>
-                {i < 2 && <div className="hidden md:block text-2xl text-muted-foreground mx-4">→</div>}
+                {i < 2 && (
+                  <div className="hidden md:flex items-center shrink-0">
+                    <svg width="32" height="16" viewBox="0 0 32 16" fill="none">
+                      <path d="M0 8h28M22 2l8 6-8 6" stroke="hsl(248 95% 65% / 0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -205,16 +215,24 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section className="px-4 py-24" style={{ background: "hsl(230 35% 7%)" }}>
+      <section className="px-4 py-24 border-t border-b" style={{ borderColor: "hsl(350 90% 62% / 0.12)", background: "hsl(230 38% 6%)" }}>
         <div className="mx-auto max-w-5xl">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "hsl(350 90% 62%)" }}>Testimonials</p>
           <h2 className="mb-12 text-center text-3xl font-bold">Loved by builders</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="rounded-2xl border border-border/50 bg-card p-6">
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">"{t.quote}"</p>
-                <div>
-                  <p className="font-semibold text-sm">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
+            {TESTIMONIALS.map((t, i) => (
+              <div key={t.name} className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)" }}>
+                <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: i === 1 ? "hsl(350 90% 62%)" : "hsl(248 95% 65%)" }} />
+                <p className="text-2xl font-serif mb-3" style={{ color: i === 1 ? "hsl(350 90% 62%)" : "hsl(248 95% 65%)" }}>"</p>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: "hsl(230 15% 72%)" }}>{t.quote}</p>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: i === 1 ? "hsl(350 90% 62%)" : "hsl(248 95% 65%)" }}>
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{t.name}</p>
+                    <p className="text-xs" style={{ color: "hsl(230 15% 55%)" }}>{t.role}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -224,15 +242,16 @@ export default function Landing() {
 
       {/* Final CTA */}
       <section className="px-4 py-24">
-        <div className="mx-auto max-w-2xl text-center rounded-2xl bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/10 border border-primary/20 p-12">
+        <div className="relative mx-auto max-w-2xl text-center rounded-2xl p-12 overflow-hidden" style={{ background: "hsl(230 38% 8%)", border: "1px solid hsl(248 95% 65% / 0.25)" }}>
+          <div className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, hsl(248 95% 65% / 0.15), transparent)" }} />
           <h2 className="mb-4 text-3xl font-bold">Start crafting better prompts today</h2>
-          <p className="mb-8 text-muted-foreground">Free to start. No credit card required.</p>
+          <p className="mb-8" style={{ color: "hsl(230 15% 60%)" }}>Free to start. No credit card required.</p>
           {!isSignedIn ? (
-            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
+            <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold text-white transition-all hover:scale-[1.02]" style={{ background: "hsl(248 95% 65%)", boxShadow: "0 0 32px hsl(248 95% 65% / 0.4)" }}>
               Create free account <ArrowRight className="h-4 w-4" />
             </Link>
           ) : (
-            <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02] transition-all">
+            <Link href="/builder" className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-semibold text-white transition-all hover:scale-[1.02]" style={{ background: "hsl(248 95% 65%)", boxShadow: "0 0 32px hsl(248 95% 65% / 0.4)" }}>
               Open builder <ArrowRight className="h-4 w-4" />
             </Link>
           )}
