@@ -1,21 +1,54 @@
-import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Zap, Star, Infinity } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { API_BASE } from "@/lib/utils";
+
+const PLANS = [
+  {
+    tier: "free",
+    price: "$0 / mo",
+    dailyLimit: 10,
+    features: [
+      "10 prompt generations per day",
+      "2 versions per generation",
+      "Download as .md / .txt / .json",
+      "Public template library",
+      "No credit card required",
+    ],
+  },
+  {
+    tier: "pro",
+    price: "$9 / mo",
+    dailyLimit: 200,
+    features: [
+      "200 prompt generations per day",
+      "Save unlimited prompts",
+      "Full prompt history",
+      "Custom templates",
+      "Priority support",
+    ],
+  },
+  {
+    tier: "unlimited",
+    price: "$29 / mo",
+    dailyLimit: -1,
+    features: [
+      "Unlimited generations",
+      "Everything in Pro",
+      "Analytics dashboard",
+      "API access (coming soon)",
+      "Dedicated support",
+    ],
+  },
+];
 
 const PLAN_ICONS = { free: Zap, pro: Star, unlimited: Infinity };
 const PLAN_COLORS = {
   free: "border-border",
-  pro: "border-primary shadow-lg shadow-primary/10",
+  pro: "border-primary shadow-lg shadow-primary/20",
   unlimited: "border-secondary shadow-lg shadow-secondary/10",
 };
 
 export default function Billing() {
   usePageTitle("Pricing");
-  const { data: plans = [] } = useQuery({
-    queryKey: ["plans"],
-    queryFn: async () => { const r = await fetch(`${API_BASE}/api/me/plans`); return r.json(); },
-  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
@@ -28,7 +61,7 @@ export default function Billing() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan: any) => {
+        {PLANS.map((plan) => {
           const Icon = PLAN_ICONS[plan.tier as keyof typeof PLAN_ICONS] ?? Zap;
           const borderClass = PLAN_COLORS[plan.tier as keyof typeof PLAN_COLORS] ?? "border-border";
           const isPro = plan.tier === "pro";
@@ -43,7 +76,7 @@ export default function Billing() {
                 </div>
               )}
               <div className="flex items-center gap-3 mb-4">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isPro ? "bg-primary/10 border border-primary/20" : "bg-muted border border-border"}`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isPro ? "bg-primary/15 border border-primary/30" : "bg-muted border border-border"}`}>
                   <Icon className={`h-5 w-5 ${isPro ? "text-primary" : "text-muted-foreground"}`} />
                 </div>
                 <div>
@@ -52,10 +85,10 @@ export default function Billing() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-5">
-                {plan.dailyLimit === -1 ? "Unlimited" : `${plan.dailyLimit} generations/day`}
+                {plan.dailyLimit === -1 ? "Unlimited generations" : `${plan.dailyLimit} generations/day`}
               </p>
               <ul className="space-y-2.5 flex-1 mb-6">
-                {plan.features.map((f: string) => (
+                {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
                     <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                     {f}
