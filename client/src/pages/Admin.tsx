@@ -72,7 +72,7 @@ export default function Admin() {
             </thead>
             <tbody>
               {users.map((u: any) => (
-                <tr key={u.userId} className="border-t border-border hover:bg-muted/30 transition-colors">
+                <tr key={u.userId} className="border-t border-border hover:bg-muted transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{u.userId.slice(0, 20)}…</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${

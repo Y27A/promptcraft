@@ -162,7 +162,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="px-4 py-24 bg-muted/30">
+      <section className="px-4 py-24" style={{ background: "hsl(230 35% 7%)" }}>
         <div className="mx-auto max-w-6xl">
           <h2 className="mb-12 text-center text-3xl font-bold">Everything you need to prompt like a pro</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -205,7 +205,7 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section className="px-4 py-24 bg-muted/30">
+      <section className="px-4 py-24" style={{ background: "hsl(230 35% 7%)" }}>
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-12 text-center text-3xl font-bold">Loved by builders</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
