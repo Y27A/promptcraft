@@ -19,7 +19,7 @@ export function Navbar() {
   const firstName = user?.firstName;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/10 bg-[hsl(230_40%_4%/0.85)] backdrop-blur-xl shadow-sm shadow-primary/5">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">

@@ -9,7 +9,7 @@ import { API_BASE } from "@/lib/utils";
 
 const CATEGORY_COLORS: Record<string, string> = {
   writing: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-  code: "text-green-400 bg-green-400/10 border-green-400/20",
+  code: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20",
   research: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
   marketing: "text-pink-400 bg-pink-400/10 border-pink-400/20",
   productivity: "text-purple-400 bg-purple-400/10 border-purple-400/20",
@@ -17,7 +17,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "text-green-400 bg-green-400/10",
+  beginner: "text-cyan-400 bg-cyan-400/10",
   intermediate: "text-yellow-400 bg-yellow-400/10",
   advanced: "text-red-400 bg-red-400/10",
 };

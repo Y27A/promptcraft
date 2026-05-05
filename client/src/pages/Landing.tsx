@@ -138,9 +138,9 @@ export default function Landing() {
           <h3 className="mb-10 text-center text-3xl font-bold">Watch it craft prompts live</h3>
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-primary/5">
             <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
-              <div className="h-3 w-3 rounded-full bg-destructive/70" />
-              <div className="h-3 w-3 rounded-full bg-yellow-500/70" />
-              <div className="h-3 w-3 rounded-full bg-green-500/70" />
+              <div className="h-3 w-3 rounded-full bg-secondary/70" />
+              <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+              <div className="h-3 w-3 rounded-full bg-primary/70" />
               <span className="ml-2 text-xs text-muted-foreground">PromptCraft Builder</span>
             </div>
             <div className="p-6 space-y-4 min-h-[280px]">
