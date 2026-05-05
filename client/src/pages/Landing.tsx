@@ -88,8 +88,9 @@ export default function Landing() {
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pt-20 pb-32 text-center">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute right-0 top-1/2 h-[400px] w-[400px] rounded-full bg-secondary/5 blur-3xl" />
+          <div className="absolute left-1/2 top-[-80px] -translate-x-1/2 h-[700px] w-[700px] rounded-full bg-primary/25 blur-[120px]" />
+          <div className="absolute right-[-100px] top-[20%] h-[500px] w-[500px] rounded-full bg-secondary/20 blur-[100px]" />
+          <div className="absolute left-[-80px] bottom-0 h-[400px] w-[400px] rounded-full bg-primary/15 blur-[90px]" />
         </div>
         <div className="mx-auto max-w-4xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm text-primary">
