@@ -24,12 +24,12 @@ export function Navbar() {
   const toggleTheme = () => setThemePref(resolved === "dark" ? "light" : "dark");
 
   return (
-    <header className="sticky top-0 z-50 w-full" style={{ borderBottom: "1px solid hsl(248 95% 65% / 0.08)", background: "hsl(230 40% 4% / 0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+    <header className="sticky top-0 z-50 w-full" style={{ borderBottom: "1px solid hsl(var(--primary) / 0.08)", background: "hsl(var(--background) / 0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
 
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 font-bold text-lg shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(248 95% 62%)", boxShadow: "0 0 16px hsl(248 95% 65% / 0.5)" }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 16px hsl(var(--primary) / 0.5)" }}>
             <Zap className="h-4 w-4 text-white" />
           </div>
           <span style={{ background: "linear-gradient(135deg, hsl(248 95% 78%), hsl(350 90% 70%))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }} className="font-extrabold">
@@ -50,10 +50,10 @@ export function Navbar() {
                   : "hover:text-white"
               )}
               style={location === l.href ? {
-                background: "hsl(248 95% 65% / 0.12)",
-                color: "hsl(248 95% 78%)",
-                boxShadow: "inset 0 0 0 1px hsl(248 95% 65% / 0.2)",
-              } : { color: "hsl(230 15% 60%)" }}
+                background: "hsl(var(--primary) / 0.12)",
+                color: "hsl(var(--primary))",
+                boxShadow: "inset 0 0 0 1px hsl(var(--primary) / 0.2)",
+              } : { color: "hsl(var(--muted-foreground))" }}
             >
               {l.label}
             </Link>
@@ -66,7 +66,7 @@ export function Navbar() {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg transition-all hover:scale-110"
-            style={{ color: "hsl(230 15% 55%)" }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
             title={resolved === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -77,7 +77,7 @@ export function Navbar() {
               <Link
                 href="/sign-in"
                 className="px-3.5 py-1.5 text-sm font-medium transition-colors rounded-lg hover:bg-white/5"
-                style={{ color: "hsl(230 15% 60%)" }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 Sign in
               </Link>
@@ -94,18 +94,18 @@ export function Navbar() {
               <button
                 onClick={() => setDropOpen((v) => !v)}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all hover:brightness-110"
-                style={{ background: "hsl(248 95% 65% / 0.1)", border: "1px solid hsl(248 95% 65% / 0.25)" }}
+                style={{ background: "hsl(var(--primary) / 0.1)", border: "1px solid hsl(var(--primary) / 0.25)" }}
               >
                 <div className="h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: "hsl(248 95% 62%)", boxShadow: "0 0 10px hsl(248 95% 65% / 0.4)" }}>
                   {firstName?.[0]?.toUpperCase() ?? "U"}
                 </div>
                 <span className="text-white">{firstName}</span>
-                <ChevronDown className="h-3 w-3" style={{ color: "hsl(230 15% 55%)" }} />
+                <ChevronDown className="h-3 w-3" style={{ color: "hsl(var(--muted-foreground))" }} />
               </button>
               {dropOpen && (
                 <div
                   className="absolute right-0 top-full mt-2 w-52 rounded-2xl py-1.5 z-50"
-                  style={{ background: "hsl(230 38% 7%)", border: "1px solid hsl(230 30% 15%)", boxShadow: "0 20px 60px hsl(248 95% 65% / 0.12), 0 8px 24px hsl(0 0% 0% / 0.4)" }}
+                  style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", boxShadow: "0 20px 60px hsl(var(--primary) / 0.12), 0 8px 24px rgba(0,0,0,0.4)" }}
                   onMouseLeave={() => setDropOpen(false)}
                 >
                   {[
@@ -133,7 +133,7 @@ export function Navbar() {
           <button
             onClick={() => setMobileOpen((v) => !v)}
             className="md:hidden p-2 rounded-lg transition-all"
-            style={{ color: "hsl(230 15% 60%)" }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -142,7 +142,7 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t px-4 py-4 space-y-1" style={{ borderColor: "hsl(230 30% 12%)", background: "hsl(230 40% 4% / 0.98)" }}>
+        <div className="md:hidden border-t px-4 py-4 space-y-1" style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--background) / 0.98)" }}>
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
@@ -158,10 +158,10 @@ export function Navbar() {
               {l.label}
             </Link>
           ))}
-          <div className="pt-2 border-t mt-2 space-y-1" style={{ borderColor: "hsl(230 30% 12%)" }}>
+          <div className="pt-2 border-t mt-2 space-y-1" style={{ borderColor: "hsl(var(--border))" }}>
             {!isSignedIn ? (
               <>
-                <Link href="/sign-in" onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(230 15% 60%)" }}>Sign in</Link>
+                <Link href="/sign-in" onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(var(--muted-foreground))" }}>Sign in</Link>
                 <Link href="/sign-up" onClick={() => setMobileOpen(false)} className="flex justify-center px-3 py-2.5 text-sm font-semibold text-white rounded-xl" style={{ background: "linear-gradient(135deg, hsl(248 95% 62%), hsl(268 95% 58%))" }}>Sign up free</Link>
               </>
             ) : (
@@ -171,7 +171,7 @@ export function Navbar() {
                   { href: "/history", label: "History" },
                   { href: "/settings", label: "Settings" },
                 ].map(({ href, label }) => (
-                  <Link key={href} href={href} onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(230 15% 65%)" }}>{label}</Link>
+                  <Link key={href} href={href} onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</Link>
                 ))}
               </>
             )}

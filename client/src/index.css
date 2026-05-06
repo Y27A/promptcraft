@@ -7,6 +7,7 @@
   --font-mono: 'Space Mono', monospace;
 
   --color-background: hsl(230 40% 4%);
+  --color-surface: hsl(230 38% 6%);
   --color-foreground: hsl(0 0% 98%);
   --color-card: hsl(230 35% 7%);
   --color-card-foreground: hsl(0 0% 98%);
@@ -30,6 +31,7 @@
 
 :root {
   --background: 230 40% 4%;
+  --surface: 230 38% 6%;
   --foreground: 0 0% 98%;
   --card: 230 35% 7%;
   --card-foreground: 0 0% 98%;
@@ -53,6 +55,7 @@
 
 .light {
   --background: 0 0% 100%;
+  --surface: 225 15% 96%;
   --foreground: 225 25% 10%;
   --card: 0 0% 98%;
   --card-foreground: 225 25% 10%;

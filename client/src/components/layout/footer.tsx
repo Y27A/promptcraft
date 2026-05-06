@@ -23,7 +23,7 @@ const LINKS = {
 
 export function Footer() {
   return (
-    <footer className="relative mt-auto overflow-hidden" style={{ background: "hsl(230 40% 3%)", borderTop: "1px solid hsl(248 95% 65% / 0.1)" }}>
+    <footer className="relative mt-auto overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary) / 0.1)" }}>
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[300px] w-[800px]" style={{ background: "radial-gradient(ellipse at center bottom, hsl(248 95% 65% / 0.06) 0%, transparent 70%)" }} />
@@ -51,14 +51,14 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-8 w-8 items-center justify-center rounded-lg transition-all hover:scale-110"
-                style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)" }}
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
               >
                 <Github className="h-4 w-4" style={{ color: "hsl(230 15% 55%)" }} />
               </a>
               <a
                 href="mailto:yousifalbalooshi@gmail.com"
                 className="flex h-8 w-8 items-center justify-center rounded-lg transition-all hover:scale-110"
-                style={{ background: "hsl(230 38% 9%)", border: "1px solid hsl(230 30% 16%)" }}
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
               >
                 <Mail className="h-4 w-4" style={{ color: "hsl(230 15% 55%)" }} />
               </a>
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
 
         {/* CTA Banner */}
-        <div className="rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 mb-10" style={{ background: "hsl(230 38% 7%)", border: "1px solid hsl(248 95% 65% / 0.15)" }}>
+        <div className="rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 mb-10" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--primary) / 0.15)" }}>
           <div>
             <p className="font-bold text-base mb-1">Start crafting better prompts today</p>
             <p className="text-sm" style={{ color: "hsl(230 15% 55%)" }}>Free plan · No credit card · 10 generations/day forever</p>
@@ -98,7 +98,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6" style={{ borderTop: "1px solid hsl(230 30% 10%)" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6" style={{ borderTop: "1px solid hsl(var(--border))" }}>
           <p className="text-xs" style={{ color: "hsl(230 15% 38%)" }}>
             © {new Date().getFullYear()} PromptCraft. All rights reserved.
           </p>
