@@ -11,7 +11,10 @@ import type { Request } from "express";
 const router = Router();
 type AuthReq = Request & { userId: string };
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+});
 
 export const SYSTEM_PROMPT = `You are PromptCraft AI — an expert prompt engineer who helps users create powerful, effective prompts for AI tools.
 
@@ -109,7 +112,7 @@ router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
   let fullContent = "";
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       stream: true,
       messages: [
         { role: "system", content: sysPrompt },

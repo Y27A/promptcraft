@@ -5,7 +5,10 @@ import { ANON_TRIAL_LIMIT, readTrialCount, writeTrialCount } from "../lib/usage"
 import { SYSTEM_PROMPT } from "./openai";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+});
 
 router.get("/usage", (req, res) => {
   const used = readTrialCount(req);
@@ -45,7 +48,7 @@ router.post("/refine", async (req, res) => {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       stream: true,
       messages: [
         { role: "system", content: sysPrompt },
