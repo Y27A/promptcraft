@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import chroma from "chroma-js";
 
 type ThemePref = "system" | "light" | "dark";
 type Resolved = "light" | "dark";
@@ -7,25 +8,42 @@ interface ThemeCtx {
   themePref: ThemePref;
   resolved: Resolved;
   setThemePref: (p: ThemePref) => void;
+  accentHex: string;
+  setAccent: (hex: string) => void;
 }
 
 const Ctx = createContext<ThemeCtx>({
-  themePref: "system",
-  resolved: "dark",
-  setThemePref: () => {},
+  themePref: "system", resolved: "dark",
+  setThemePref: () => {}, accentHex: "#7c3aed", setAccent: () => {},
 });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themePref, setThemePrefState] = useState<ThemePref>(() => {
-    return (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "system";
-  });
+function applyAccent(hex: string) {
+  try {
+    const c = chroma(hex);
+    const [h, s, l] = c.hsl();
+    const hsl = `${Math.round(h ?? 0)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    const root = document.documentElement;
+    root.style.setProperty("--primary", hsl);
+    root.style.setProperty("--ring", hsl);
+    // derive accent (darker version) and glow
+    const darker = chroma(hex).darken(2);
+    const [dh, ds, dl] = darker.hsl();
+    root.style.setProperty("--accent", `${Math.round(dh ?? 0)} ${Math.round(ds * 100)}% ${Math.round(dl * 100)}%`);
+  } catch {}
+}
 
-  const getResolved = (pref: ThemePref): Resolved => {
-    if (pref === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    return pref;
-  };
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [themePref, setThemePrefState] = useState<ThemePref>(
+    () => (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "system"
+  );
+  const [accentHex, setAccentState] = useState<string>(
+    () => localStorage.getItem("promptcraft:accent") ?? "#7c3aed"
+  );
+
+  const getResolved = (pref: ThemePref): Resolved =>
+    pref === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+      : pref;
 
   const [resolved, setResolved] = useState<Resolved>(() => getResolved(themePref));
 
@@ -44,12 +62,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener("change", handler);
   }, [themePref]);
 
+  useEffect(() => { applyAccent(accentHex); }, [accentHex]);
+
   const setThemePref = (p: ThemePref) => {
     localStorage.setItem("promptcraft:themePref", p);
     setThemePrefState(p);
   };
 
-  return <Ctx.Provider value={{ themePref, resolved, setThemePref }}>{children}</Ctx.Provider>;
+  const setAccent = (hex: string) => {
+    localStorage.setItem("promptcraft:accent", hex);
+    setAccentState(hex);
+  };
+
+  return <Ctx.Provider value={{ themePref, resolved, setThemePref, accentHex, setAccent }}>{children}</Ctx.Provider>;
 }
 
 export const useTheme = () => useContext(Ctx);
