@@ -256,7 +256,22 @@ export default function Builder() {
                 }}
               >
                 {msg.role === "assistant" ? (
-                  <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{msg.content || "Thinking…"}</ReactMarkdown>
+                  <div className="relative">
+                    {streaming && msg === messages[messages.length - 1] && !msg.content ? (
+                      <span className="flex gap-1 py-1">
+                        {[0, 1, 2].map((i) => (
+                          <span key={i} className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: "hsl(var(--primary) / 0.7)", animationDelay: `${i * 0.15}s` }} />
+                        ))}
+                      </span>
+                    ) : (
+                      <ReactMarkdown className="prose prose-sm prose-invert max-w-none">
+                        {msg.content}
+                      </ReactMarkdown>
+                    )}
+                    {streaming && msg === messages[messages.length - 1] && msg.content && (
+                      <span className="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse rounded-sm" style={{ background: "hsl(var(--primary))" }} />
+                    )}
+                  </div>
                 ) : (
                   msg.content
                 )}
