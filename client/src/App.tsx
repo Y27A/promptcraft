@@ -1,4 +1,4 @@
-import { Router, Route, Switch, Redirect } from "wouter";
+import { Router, Route, Switch, Redirect, useLocation } from "wouter";
 import { useEffect } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import { Navbar } from "./components/layout/navbar";
@@ -44,47 +44,55 @@ function TokenSync() {
   return null;
 }
 
+function AppShell() {
+  const [location] = useLocation();
+  const noFooter = location === "/builder";
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main className="flex-1 flex flex-col">
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route path="/builder" component={Builder} />
+          <Route path="/templates" component={Templates} />
+          <Route path="/gallery" component={Gallery} />
+          <Route path="/guide" component={Guide} />
+          <Route path="/billing" component={Billing} />
+          <Route path="/share/:token" component={SharePage} />
+          <Route path="/p/:slug" component={PublicSession} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/dashboard">
+            <Protected><Dashboard /></Protected>
+          </Route>
+          <Route path="/history">
+            <Protected><History /></Protected>
+          </Route>
+          <Route path="/settings">
+            <Protected><SettingsPage /></Protected>
+          </Route>
+          <Route path="/analytics">
+            <Protected><Analytics /></Protected>
+          </Route>
+          <Route path="/admin">
+            <Protected><Admin /></Protected>
+          </Route>
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+      {!noFooter && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <TokenSync />
       <Router base={BASE}>
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Switch>
-              <Route path="/" component={Landing} />
-              <Route path="/builder" component={Builder} />
-              <Route path="/templates" component={Templates} />
-              <Route path="/gallery" component={Gallery} />
-              <Route path="/guide" component={Guide} />
-              <Route path="/billing" component={Billing} />
-              <Route path="/share/:token" component={SharePage} />
-              <Route path="/p/:slug" component={PublicSession} />
-              <Route path="/privacy" component={Privacy} />
-              <Route path="/terms" component={Terms} />
-              <Route path="/sign-in/*?" component={SignInPage} />
-              <Route path="/sign-up/*?" component={SignUpPage} />
-              <Route path="/dashboard">
-                <Protected><Dashboard /></Protected>
-              </Route>
-              <Route path="/history">
-                <Protected><History /></Protected>
-              </Route>
-              <Route path="/settings">
-                <Protected><SettingsPage /></Protected>
-              </Route>
-              <Route path="/analytics">
-                <Protected><Analytics /></Protected>
-              </Route>
-              <Route path="/admin">
-                <Protected><Admin /></Protected>
-              </Route>
-              <Route component={NotFound} />
-            </Switch>
-          </main>
-          <Footer />
-        </div>
+        <AppShell />
       </Router>
       <Toaster richColors position="top-right" />
     </ThemeProvider>

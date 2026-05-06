@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 import {
   motion, AnimatePresence, useInView,
@@ -84,6 +84,7 @@ function TiltCard({ children, className, style }: { children: React.ReactNode; c
 function MagneticButton({ children, className, style, href }: {
   children: React.ReactNode; className?: string; style?: React.CSSProperties; href?: string;
 }) {
+  const [, navigate] = useLocation();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const sx = useSpring(x, { stiffness: 150, damping: 15 });
@@ -94,8 +95,15 @@ function MagneticButton({ children, className, style, href }: {
     y.set((e.clientY - r.top - r.height / 2) * 0.3);
   };
   return (
-    <motion.a href={href} style={{ x: sx, y: sy, ...style }} onMouseMove={onMove}
-      onMouseLeave={() => { x.set(0); y.set(0); }} whileTap={{ scale: 0.96 }} className={className}>
+    <motion.a
+      href={href}
+      onClick={(e) => { if (href) { e.preventDefault(); navigate(href); } }}
+      style={{ x: sx, y: sy, ...style }}
+      onMouseMove={onMove}
+      onMouseLeave={() => { x.set(0); y.set(0); }}
+      whileTap={{ scale: 0.96 }}
+      className={className}
+    >
       {children}
     </motion.a>
   );

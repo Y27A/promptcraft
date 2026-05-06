@@ -178,7 +178,7 @@ export default function Builder() {
   const quotaExhausted = !isSignedIn && trialUsed >= trialLimit;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="flex flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
       {/* Chat pane */}
       <div className="flex flex-col flex-1 min-w-0 border-r border-border">
         {/* Chat header */}
