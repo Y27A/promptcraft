@@ -44,8 +44,8 @@ export default function Builder() {
   const [copied, setCopied] = useState(false);
   const [trialUsed, setTrialUsed] = useState(0);
   const [trialLimit, setTrialLimit] = useState(10);
-  const [domain, setDomain] = useState("");
-  const [tone, setTone] = useState("");
+  const [domain, setDomain] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultDomain ?? ""; } catch { return ""; } });
+  const [tone, setTone] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultTone ?? ""; } catch { return ""; } });
   const [lastUserInput, setLastUserInput] = useState("");
   const [showExport, setShowExport] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
