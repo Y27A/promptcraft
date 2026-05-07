@@ -21,9 +21,9 @@ const PLANS = [
     tier: "pro",
     monthly: 9,
     yearly: 79,
-    dailyLimit: 200,
+    dailyLimit: 50,
     features: [
-      "200 prompt generations per day",
+      "50 prompt generations per day",
       "Save unlimited prompts",
       "Full prompt history",
       "Custom templates",
@@ -61,10 +61,6 @@ export default function Billing() {
       <FadeUp className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-3">Simple, transparent pricing</h1>
         <p className="text-muted-foreground text-lg">Start for free. Upgrade when you need more.</p>
-        <p className="mt-2 text-sm text-muted-foreground italic">
-          Stripe is not available in the GCC region — upgrades are processed manually. Contact us to upgrade.
-        </p>
-
         {/* Billing toggle */}
         <div className="mt-8 inline-flex items-center gap-3 rounded-2xl p-1.5" style={{ background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))" }}>
           <button
