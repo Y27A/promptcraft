@@ -6,6 +6,9 @@ const LINKS = {
     { href: "/builder", label: "Builder" },
     { href: "/templates", label: "Templates" },
     { href: "/gallery", label: "Gallery" },
+    { href: "/saved", label: "Saved Prompts" },
+    { href: "/projects", label: "Projects" },
+    { href: "/extension", label: "Extension" },
     { href: "/billing", label: "Pricing" },
     { href: "/guide", label: "Guide" },
   ],
@@ -38,7 +41,7 @@ export function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "hsl(248 95% 62%)", boxShadow: "0 0 20px hsl(248 95% 65% / 0.4)" }}>
                 <Zap className="h-4.5 w-4.5 text-white" />
               </div>
-              <span style={{ background: "linear-gradient(135deg, hsl(248 95% 75%), hsl(350 90% 68%))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }} className="font-extrabold text-xl">
+              <span className="font-extrabold text-xl text-white">
                 PromptCraft
               </span>
             </Link>

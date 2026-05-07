@@ -51,6 +51,7 @@ export default function Builder() {
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [savedToProject, setSavedToProject] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
   const exportRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
@@ -299,6 +300,14 @@ export default function Builder() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
+      {/* Onboarding banner */}
+      {showOnboarding && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm" style={{ background: "hsl(248 95% 62% / 0.12)", borderBottom: "1px solid hsl(248 95% 62% / 0.25)" }}>
+          <span className="text-muted-foreground">👋 <strong className="text-foreground">Welcome!</strong> Describe what you need in plain English — PromptCraft writes the perfect AI prompt for you.</span>
+          <button onClick={() => { setShowOnboarding(false); localStorage.setItem("pc:visited","1"); }} className="shrink-0 text-xs px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">Got it</button>
+        </div>
+      )}
+
       {/* Mobile tabs */}
       <div className="md:hidden flex border-b border-border bg-card">
         {(["chat","output"] as const).map(tab => (
