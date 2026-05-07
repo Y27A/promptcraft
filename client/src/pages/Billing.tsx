@@ -38,8 +38,9 @@ const PLANS = [
     features: [
       "Unlimited generations",
       "Everything in Pro",
+      "🧩 Browser Extension (Chrome/Edge/Brave)",
+      "Works on ChatGPT, Claude, Gemini & more",
       "Analytics dashboard",
-      "API access (coming soon)",
       "Dedicated support",
     ],
   },

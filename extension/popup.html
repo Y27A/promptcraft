@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptCraft</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 360px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0e1a;
+      color: #f0f0f8;
+      font-size: 13px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #1e2035;
+    }
+    .logo {
+      width: 26px; height: 26px;
+      background: #6d28d9;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: white;
+      box-shadow: 0 0 10px #6d28d966;
+    }
+    .brand { font-weight: 700; font-size: 14px; color: white; }
+    .body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #6b7090; margin-bottom: 4px; display: block; }
+    textarea {
+      width: 100%; resize: none;
+      background: #13152a; border: 1px solid #1e2035;
+      border-radius: 10px; padding: 10px 12px;
+      color: #f0f0f8; font-size: 13px; font-family: inherit;
+      outline: none; line-height: 1.5;
+    }
+    textarea:focus { border-color: #6d28d9; }
+    .row { display: flex; gap: 8px; }
+    select {
+      flex: 1; background: #13152a; border: 1px solid #1e2035;
+      border-radius: 8px; padding: 6px 8px;
+      color: #9ca3c0; font-size: 12px; outline: none; cursor: pointer;
+    }
+    select:focus { border-color: #6d28d9; }
+    .btn-generate {
+      width: 100%; padding: 10px;
+      background: linear-gradient(135deg, #6d28d9, #5b21b6);
+      border: none; border-radius: 10px;
+      color: white; font-weight: 600; font-size: 13px;
+      cursor: pointer; transition: opacity .15s;
+      box-shadow: 0 0 16px #6d28d944;
+    }
+    .btn-generate:hover { opacity: .9; }
+    .btn-generate:disabled { opacity: .4; cursor: not-allowed; }
+    .output-box {
+      background: #13152a; border: 1px solid #1e2035;
+      border-radius: 10px; padding: 12px;
+      display: none; flex-direction: column; gap: 8px;
+    }
+    .output-box.show { display: flex; }
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      border: 1px solid #1e2035; cursor: pointer; transition: all .15s;
+      background: transparent; color: #6b7090;
+    }
+    .tab.active { background: #6d28d9; color: white; border-color: #6d28d9; }
+    .output-text {
+      font-size: 12px; color: #c0c4e0; line-height: 1.6;
+      max-height: 180px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .output-text::-webkit-scrollbar { width: 4px; }
+    .output-text::-webkit-scrollbar-thumb { background: #1e2035; border-radius: 2px; }
+    .actions { display: flex; gap: 6px; }
+    .btn-sm {
+      flex: 1; padding: 7px;
+      border-radius: 8px; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all .15s; border: 1px solid #1e2035;
+    }
+    .btn-copy { background: #1e2035; color: #c0c4e0; }
+    .btn-copy:hover { border-color: #6d28d9; color: white; }
+    .btn-insert { background: #6d28d933; color: #a78bfa; border-color: #6d28d944; }
+    .btn-insert:hover { background: #6d28d9; color: white; }
+    .dots { display: inline-flex; gap: 4px; align-items: center; }
+    .dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #a78bfa; animation: bounce .8s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    .settings { padding: 14px; border-top: 1px solid #1e2035; }
+    .key-row { display: flex; gap: 6px; }
+    input[type=text] {
+      flex: 1; background: #13152a; border: 1px solid #1e2035;
+      border-radius: 8px; padding: 6px 10px;
+      color: #f0f0f8; font-size: 12px; outline: none;
+    }
+    input[type=text]:focus { border-color: #6d28d9; }
+    .btn-save {
+      padding: 6px 12px; background: #6d28d9; border: none;
+      border-radius: 8px; color: white; font-size: 11px; font-weight: 600;
+      cursor: pointer;
+    }
+    .notice { font-size: 10px; color: #6b7090; margin-top: 6px; }
+    .notice a { color: #a78bfa; }
+    .sep { height: 1px; background: #1e2035; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">⚡</div>
+    <span class="brand">PromptCraft</span>
+  </div>
+
+  <div class="body">
+    <div>
+      <label>Describe what you need</label>
+      <textarea id="input" rows="3" placeholder="e.g. Write a cold email to a potential client…"></textarea>
+    </div>
+    <div class="row">
+      <select id="domain">
+        <option value="">Any domain</option>
+        <option>Marketing</option><option>Coding</option><option>Writing</option>
+        <option>Research</option><option>Education</option><option>Business</option>
+        <option>Creative</option><option>Legal</option><option>Finance</option>
+      </select>
+      <select id="tone">
+        <option value="">Any tone</option>
+        <option>Professional</option><option>Casual</option><option>Formal</option>
+        <option>Friendly</option><option>Technical</option><option>Creative</option>
+        <option>Persuasive</option>
+      </select>
+    </div>
+    <button class="btn-generate" id="btn">Generate Prompt</button>
+
+    <div class="output-box" id="output-box">
+      <div class="tabs">
+        <button class="tab active" data-v="1">V1 Detailed</button>
+        <button class="tab" data-v="2">V2 Concise</button>
+      </div>
+      <div class="output-text" id="output-text"></div>
+      <div class="actions">
+        <button class="btn-sm btn-copy" id="btn-copy">📋 Copy</button>
+        <button class="btn-sm btn-insert" id="btn-insert">⚡ Insert into AI</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="settings">
+    <label>Groq API Key</label>
+    <div class="key-row">
+      <input type="text" id="api-key" placeholder="gsk_…" />
+      <button class="btn-save" id="btn-save-key">Save</button>
+    </div>
+    <p class="notice">Free key at <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

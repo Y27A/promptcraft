@@ -19,6 +19,7 @@ import Analytics from "./pages/Analytics";
 import Admin from "./pages/Admin";
 import Projects from "./pages/Projects";
 import Saved from "./pages/Saved";
+import Extension from "./pages/Extension";
 import Gallery from "./pages/Gallery";
 import Guide from "./pages/Guide";
 import SharePage from "./pages/Share";
@@ -77,6 +78,7 @@ function AppShell() {
           </Route>
           <Route path="/projects" component={Projects} />
           <Route path="/saved" component={Saved} />
+          <Route path="/extension" component={Extension} />
           <Route path="/analytics">
             <Protected><Analytics /></Protected>
           </Route>
