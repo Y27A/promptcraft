@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Zap, ChevronDown, LayoutDashboard, History, Settings, Sun, Moon, Menu, X, Palette } from "lucide-react";
+import { Zap, ChevronDown, LayoutDashboard, History, Settings, Sun, Moon, Menu, X, Palette, ShieldCheck } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
 import { cn } from "@/lib/utils";
@@ -154,6 +154,7 @@ export function Navbar() {
                     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
                     { href: "/history", icon: History, label: "History" },
                     { href: "/settings", icon: Settings, label: "Settings" },
+                    { href: "/admin", icon: ShieldCheck, label: "Admin" },
                   ].map(({ href, icon: Icon, label }) => (
                     <Link
                       key={href}

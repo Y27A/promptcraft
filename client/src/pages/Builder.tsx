@@ -316,24 +316,42 @@ export default function Builder() {
         )}
 
         {/* Input */}
-        <div className="p-3 border-t border-border bg-card">
+        <div className="px-3 pt-3 pb-2 border-t border-border bg-card">
           {showStyle && (
-            <div className="flex gap-2 mb-2">
-              <select value={domain} onChange={(e) => setDomain(e.target.value)}
-                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground cursor-pointer">
-                <option value="">Domain</option>
-                {["Marketing","Coding","Writing","Research","Education","Business","Creative","Data Analysis","Legal","Healthcare","Finance","Social Media"].map(d => <option key={d} value={d.toLowerCase()}>{d}</option>)}
-              </select>
-              <select value={tone} onChange={(e) => setTone(e.target.value)}
-                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground cursor-pointer">
-                <option value="">Tone</option>
-                {["Professional","Casual","Formal","Friendly","Technical","Creative","Concise","Persuasive","Empathetic","Authoritative"].map(t => <option key={t} value={t.toLowerCase()}>{t}</option>)}
-              </select>
+            <div className="mb-3 space-y-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">Domain</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social Media"].map(d => (
+                    <button key={d} onClick={() => setDomain(domain === d.toLowerCase() ? "" : d.toLowerCase())}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+                      style={domain === d.toLowerCase() ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">Tone</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic","Authoritative"].map(t => (
+                    <button key={t} onClick={() => setTone(tone === t.toLowerCase() ? "" : t.toLowerCase())}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+                      style={tone === t.toLowerCase() ? { background: "hsl(var(--secondary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
           <div className="flex gap-2 items-end">
-            <button onClick={() => setShowStyle((v) => !v)} className="p-2 rounded-xl transition-all bg-muted border border-border text-muted-foreground" title="Style options">
+            <button onClick={() => setShowStyle((v) => !v)}
+              className="p-2 rounded-xl transition-all border text-xs font-medium flex items-center gap-1"
+              style={showStyle || domain || tone ? { background: "hsl(var(--primary) / 0.1)", border: "1px solid hsl(var(--primary) / 0.3)", color: "hsl(var(--primary))" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
+              title="Style options">
               <ChevronDown className={`h-4 w-4 transition-transform ${showStyle ? "rotate-180" : ""}`} />
+              {(domain || tone) && <span className="text-[10px]">{[domain, tone].filter(Boolean).join(" · ")}</span>}
             </button>
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
