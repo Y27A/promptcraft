@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Copy, Shuffle, ExternalLink, Search, Users } from "lucide-react";
+import { Page, FadeUp, AnimCard } from "@/components/ui/page-motion";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE, formatAge } from "@/lib/utils";
@@ -22,13 +23,13 @@ export default function Gallery() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-8">
+    <Page className="mx-auto max-w-6xl px-4 py-10">
+      <FadeUp className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
           <Users className="h-7 w-7 text-secondary" /> Community Gallery
         </h1>
         <p className="text-muted-foreground">Browse and remix prompts shared by the community.</p>
-      </div>
+      </FadeUp>
 
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -88,6 +89,6 @@ export default function Gallery() {
           ))}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

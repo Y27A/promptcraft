@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-react";
 import { Link } from "wouter";
 import { Bookmark, Heart, Tag, Clock, Search, Trash2, Copy, Download, RefreshCw, Share2 } from "lucide-react";
+import { Page, FadeUp, AnimCard } from "@/components/ui/page-motion";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE } from "@/lib/utils";

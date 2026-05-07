@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAuth, useSafeUser } from "@/lib/clerk-safe";
 import { Link } from "wouter";
 import { Plus, BookOpen, Wand2, Star } from "lucide-react";
+import { Page, FadeUp, AnimCard } from "@/components/ui/page-motion";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE } from "@/lib/utils";
@@ -54,11 +55,11 @@ export default function Templates() {
   const filtered = category === "all" ? templates : templates.filter((t: any) => t.category === category);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-8">
+    <Page className="mx-auto max-w-6xl px-4 py-10">
+      <FadeUp className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Templates</h1>
         <p className="text-muted-foreground">Start faster with curated prompts and save your own.</p>
-      </div>
+      </FadeUp>
 
       {/* My Templates */}
       {isSignedIn && <section className="mb-12">
@@ -113,7 +114,7 @@ export default function Templates() {
           {filtered.map((t: any) => <TemplateCard key={t.id} template={t} />)}
         </div>
       </section>
-    </div>
+    </Page>
   );
 }
 

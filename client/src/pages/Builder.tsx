@@ -306,8 +306,11 @@ export default function Builder() {
               <ChevronDown className={`h-4 w-4 transition-transform ${showStyle ? "rotate-180" : ""}`} />
             </button>
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); send(); } }}
-              placeholder="Describe what you want to prompt…" disabled={quotaExhausted || streaming} rows={2}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+              }}
+              placeholder="Describe what you want to prompt… (Enter to send, Shift+Enter for new line)"
+              disabled={quotaExhausted || streaming} rows={2}
               className="flex-1 resize-none rounded-xl px-3 py-2 text-sm focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-muted border border-border text-foreground" />
             <button onClick={send} disabled={!input.trim() || streaming || quotaExhausted}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -315,7 +318,7 @@ export default function Builder() {
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-1.5 text-center text-[10px] text-muted-foreground/60">Ctrl/Cmd + Enter to send</p>
+          <p className="mt-1.5 text-center text-[10px] text-muted-foreground/60">Enter to send · Shift+Enter for new line</p>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { CheckCircle, Zap, Star, Infinity } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { Page, FadeUp, AnimCard } from "@/components/ui/page-motion";
 
 const PLANS = [
   {
@@ -51,14 +52,14 @@ export default function Billing() {
   usePageTitle("Pricing");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <div className="mb-12 text-center">
+    <Page className="mx-auto max-w-5xl px-4 py-16">
+      <FadeUp className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-3">Simple, transparent pricing</h1>
         <p className="text-muted-foreground text-lg">Start for free. Upgrade when you need more.</p>
         <p className="mt-2 text-sm text-muted-foreground italic">
           Stripe is not available in the GCC region — upgrades are processed manually. Contact us to upgrade.
         </p>
-      </div>
+      </FadeUp>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
@@ -115,6 +116,6 @@ export default function Billing() {
           );
         })}
       </div>
-    </div>
+    </Page>
   );
 }
