@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, Zap, Sparkles, RefreshCw } from "lucide-react";
+import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -18,6 +18,9 @@ function extractVersions(text: string): { v1: string; v2: string } | null {
 }
 
 type Message = { role: "user" | "assistant"; content: string; id: string };
+
+const DOMAINS = ["","Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"];
+const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"];
 
 export default function Builder() {
   usePageTitle("Builder");
@@ -37,8 +40,9 @@ export default function Builder() {
   const [trialLimit, setTrialLimit] = useState(10);
   const [domain, setDomain] = useState("");
   const [tone, setTone] = useState("");
-  const [mode, setMode] = useState<"beginner" | "advanced">("beginner");
   const [lastUserInput, setLastUserInput] = useState("");
+  const [showExport, setShowExport] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -69,6 +73,15 @@ export default function Builder() {
     }
   }, []);
 
+  // Close export dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setShowExport(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const DIRECT = !!import.meta.env.VITE_GROQ_API_KEY;
 
   const send = useCallback(async () => {
@@ -86,23 +99,28 @@ export default function Builder() {
 
     try {
       if (DIRECT) {
-        // Call Groq directly from frontend (no backend needed)
-        let sysPrompt = SYSTEM_PROMPT;
-        if (mode === "advanced") sysPrompt += "\n\nAdvanced mode: reference chain-of-thought and few-shot techniques.";
-        if (mode === "beginner") sysPrompt += "\n\nBeginner mode: use plain language, explain any technical terms.";
+        let sysPrompt = SYSTEM_PROMPT + "\n\nAdvanced mode: reference chain-of-thought and few-shot techniques.";
         if (domain || tone) sysPrompt += `\n\nUser context — domain: ${domain || "general"}, tone: ${tone || "neutral"}.`;
-
         const history = messages.map((m) => ({ role: m.role, content: m.content }));
         await streamGroq(
           [{ role: "system", content: sysPrompt }, ...history, { role: "user", content }],
           (delta) => setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: m.content + delta } : m)),
-          () => setStreaming(false),
+          () => {
+            setStreaming(false);
+            setMessages((prev) => {
+              const last = prev.find((m) => m.id === assistantId);
+              if (last) {
+                const versions = extractVersions(last.content);
+                if (versions) { setPromptVersions(versions); setActiveVersion(1); }
+              }
+              return prev;
+            });
+          },
         );
         setTrialUsed((u) => u + 1);
         return;
       }
 
-      // Backend path (when server is deployed)
       if (isSignedIn) {
         let sid = sessionId;
         if (!sid) {
@@ -119,7 +137,7 @@ export default function Builder() {
         const response = await fetch(`${API_BASE}/api/openai/sessions/${sid}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ content, mode, domain: domain || undefined, style: tone || undefined }),
+          body: JSON.stringify({ content, mode: "advanced", domain: domain || undefined, style: tone || undefined }),
           credentials: "include",
         });
         await handleStream(response, assistantId);
@@ -127,12 +145,12 @@ export default function Builder() {
         const response = await fetch(`${API_BASE}/api/trial/refine`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, mode, domain: domain || undefined, style: tone || undefined }),
+          body: JSON.stringify({ content, mode: "advanced", domain: domain || undefined, style: tone || undefined }),
           credentials: "include",
         });
         if (response.status === 402) {
           setMessages((prev) => prev.filter((m) => m.id !== assistantId));
-          toast.error("Trial limit reached — sign up for free to continue");
+          toast.error("Trial limit reached — sign up free to continue");
           setStreaming(false);
           return;
         }
@@ -145,19 +163,17 @@ export default function Builder() {
     } finally {
       setStreaming(false);
     }
-  }, [input, streaming, isSignedIn, sessionId, mode, domain, tone, getToken, messages]);
+  }, [input, streaming, isSignedIn, sessionId, domain, tone, getToken, messages]);
 
   async function handleStream(response: Response, assistantId: string) {
     const reader = response.body?.getReader();
     if (!reader) return;
     const decoder = new TextDecoder();
     let full = "";
-
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value);
-      const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+      const lines = decoder.decode(value).split("\n").filter((l) => l.startsWith("data: "));
       for (const line of lines) {
         const data = line.slice(6);
         if (data === "[DONE]") break;
@@ -165,38 +181,50 @@ export default function Builder() {
           const parsed = JSON.parse(data);
           if (parsed.content) {
             full += parsed.content;
-            setMessages((prev) =>
-              prev.map((m) => (m.id === assistantId ? { ...m, content: full } : m))
-            );
+            setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: full } : m));
           }
         } catch {}
       }
     }
-
     const versions = extractVersions(full);
-    if (versions) {
-      setPromptVersions(versions);
-      setActiveVersion(1);
-    }
+    if (versions) { setPromptVersions(versions); setActiveVersion(1); }
   }
 
   const activeContent = promptVersions
-    ? activeVersion === 1 ? promptVersions.v1 : promptVersions.v2
+    ? (activeVersion === 1 ? promptVersions.v1 : promptVersions.v2)
     : [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
 
   const copyActive = () => {
     navigator.clipboard.writeText(activeContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success("Copied to clipboard");
+    toast.success("Copied!");
+  };
+
+  const doExport = (fmt: "md" | "txt" | "json") => {
+    exportPrompt(`prompt-v${activeVersion}`, activeContent, fmt);
+    setShowExport(false);
+    toast.success(`Exported as .${fmt}`);
   };
 
   const quotaExhausted = !isSignedIn && trialUsed >= trialLimit;
+
+  const selectStyle = {
+    background: "hsl(var(--muted))",
+    border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--muted-foreground))",
+    borderRadius: "0.5rem",
+    padding: "0.25rem 0.5rem",
+    fontSize: "0.75rem",
+    outline: "none",
+    cursor: "pointer",
+  } as React.CSSProperties;
 
   return (
     <div className="flex flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
       {/* Chat pane */}
       <div className="flex flex-col flex-1 min-w-0 border-r border-border">
+
         {/* Chat header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-2">
@@ -206,25 +234,10 @@ export default function Builder() {
             <span className="font-bold text-sm text-foreground">PromptCraft Builder</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMode(mode === "beginner" ? "advanced" : "beginner")}
-              className="px-3 py-1 rounded-full text-xs font-medium transition-all"
-              style={mode === "advanced" ? {
-                background: "hsl(var(--primary) / 0.12)",
-                border: "1px solid hsl(var(--primary) / 0.3)",
-                color: "hsl(var(--primary))",
-              } : {
-                background: "hsl(var(--muted))",
-                border: "1px solid hsl(var(--border))",
-                color: "hsl(var(--muted-foreground))",
-              }}
-            >
-              {mode === "advanced" ? "⚡ Advanced" : "Beginner"}
-            </button>
             {lastUserInput && !streaming && (
               <button onClick={() => { setInput(lastUserInput); setTimeout(() => send(), 0); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
-                title="Regenerate last response">
+                title="Regenerate">
                 <RefreshCw className="h-3 w-3" /> Regen
               </button>
             )}
@@ -239,35 +252,16 @@ export default function Builder() {
           </div>
         </div>
 
-        {/* Domain + Tone pills — always visible */}
-        <div className="border-b border-border bg-card/50 px-4 py-2 overflow-x-auto">
-          <div className="flex items-center gap-3 min-w-max">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Domain</span>
-              <div className="flex gap-1">
-                {["Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"].map(d => (
-                  <button key={d} onClick={() => setDomain(domain === d.toLowerCase() ? "" : d.toLowerCase())}
-                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap"
-                    style={domain === d.toLowerCase() ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="w-px h-4 bg-border shrink-0" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Tone</span>
-              <div className="flex gap-1">
-                {["Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"].map(t => (
-                  <button key={t} onClick={() => setTone(tone === t.toLowerCase() ? "" : t.toLowerCase())}
-                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap"
-                    style={tone === t.toLowerCase() ? { background: "hsl(var(--secondary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* Domain + Tone dropdowns */}
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-card/50">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Domain</span>
+          <select value={domain} onChange={(e) => setDomain(e.target.value)} style={selectStyle}>
+            {DOMAINS.map((d) => <option key={d} value={d.toLowerCase()}>{d || "Any"}</option>)}
+          </select>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tone</span>
+          <select value={tone} onChange={(e) => setTone(e.target.value)} style={selectStyle}>
+            {TONES.map((t) => <option key={t} value={t.toLowerCase()}>{t || "Any"}</option>)}
+          </select>
         </div>
 
         {/* Messages */}
@@ -284,11 +278,8 @@ export default function Builder() {
               <p className="text-sm max-w-xs leading-relaxed text-muted-foreground">Describe your goal in plain English and get two production-ready prompts instantly</p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {["Write a cold email", "Build a React hook", "Analyze my data", "Summarize this doc"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setInput(s)}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:brightness-110 bg-card border border-border text-muted-foreground"
-                  >
+                  <button key={s} onClick={() => setInput(s)}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:brightness-110 bg-card border border-border text-muted-foreground">
                     {s}
                   </button>
                 ))}
@@ -300,35 +291,27 @@ export default function Builder() {
               <div
                 className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
                 style={msg.role === "user" ? {
-                  background: "hsl(var(--primary))",
-                  color: "white",
-                  boxShadow: "0 4px 16px hsl(var(--primary) / 0.25)",
+                  background: "hsl(var(--primary))", color: "white", boxShadow: "0 4px 16px hsl(var(--primary) / 0.25)",
                 } : {
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  color: "hsl(var(--foreground))",
+                  background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", color: "hsl(var(--foreground))",
                 }}
               >
                 {msg.role === "assistant" ? (
                   <div className="relative">
                     {streaming && msg === messages[messages.length - 1] && !msg.content ? (
                       <span className="flex gap-1 py-1">
-                        {[0, 1, 2].map((i) => (
+                        {[0,1,2].map((i) => (
                           <span key={i} className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: "hsl(var(--primary) / 0.7)", animationDelay: `${i * 0.15}s` }} />
                         ))}
                       </span>
                     ) : (
-                      <ReactMarkdown className="prose prose-sm prose-invert max-w-none">
-                        {msg.content}
-                      </ReactMarkdown>
+                      <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{msg.content}</ReactMarkdown>
                     )}
                     {streaming && msg === messages[messages.length - 1] && msg.content && (
                       <span className="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse rounded-sm" style={{ background: "hsl(var(--primary))" }} />
                     )}
                   </div>
-                ) : (
-                  msg.content
-                )}
+                ) : msg.content}
               </div>
             </div>
           ))}
@@ -338,7 +321,7 @@ export default function Builder() {
         {/* Quota banner */}
         {!isSignedIn && (
           <div className="px-4 py-2 text-xs text-center border-t border-border"
-            style={{ background: quotaExhausted ? "hsl(0 60% 12%)" : "hsl(var(--surface, var(--muted)))", color: quotaExhausted ? "hsl(0 70% 65%)" : "hsl(var(--muted-foreground))" }}>
+            style={{ background: quotaExhausted ? "hsl(0 60% 12%)" : "hsl(var(--muted))", color: quotaExhausted ? "hsl(0 70% 65%)" : "hsl(var(--muted-foreground))" }}>
             {quotaExhausted
               ? <>Trial limit reached — <Link href="/sign-up" className="font-semibold underline">Sign up free</Link> to continue</>
               : `${trialLimit - trialUsed} of ${trialLimit} free trials remaining`}
@@ -349,10 +332,8 @@ export default function Builder() {
         <div className="px-3 pt-3 pb-2 border-t border-border bg-card">
           <div className="flex gap-2 items-end">
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-              }}
-              placeholder="Describe what you want to prompt… (Enter to send, Shift+Enter for new line)"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Describe what you want to prompt… (Enter to send)"
               disabled={quotaExhausted || streaming} rows={2}
               className="flex-1 resize-none rounded-xl px-3 py-2 text-sm focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-muted border border-border text-foreground" />
             <button onClick={send} disabled={!input.trim() || streaming || quotaExhausted}
@@ -361,7 +342,6 @@ export default function Builder() {
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-1.5 text-center text-[10px] text-muted-foreground/60">Enter to send · Shift+Enter for new line</p>
         </div>
       </div>
 
@@ -371,40 +351,45 @@ export default function Builder() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
-            {promptVersions ? (
-              <div className="flex gap-1">
-                {([1, 2] as const).map((v) => (
-                  <button key={v} onClick={() => setActiveVersion(v)}
-                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
-                    style={activeVersion === v ? {
-                      background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
-                    } : {
-                      background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
-                    }}>
-                    {v === 1 ? "V1 Detailed" : "V2 Concise"}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <span className="font-bold text-sm text-foreground">Generated Output</span>
-            )}
+            {/* V1 / V2 always visible */}
+            <div className="flex gap-1">
+              {([1, 2] as const).map((v) => (
+                <button key={v} onClick={() => setActiveVersion(v)}
+                  disabled={!promptVersions}
+                  className="px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-30"
+                  style={activeVersion === v && promptVersions ? {
+                    background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
+                  } : {
+                    background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
+                  }}>
+                  {v === 1 ? "V1 Detailed" : "V2 Concise"}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={copyActive} disabled={!activeContent}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
             </button>
-            <div className="relative group">
-              <button disabled={!activeContent}
+            {/* Export — click-based dropdown */}
+            <div className="relative" ref={exportRef}>
+              <button
+                onClick={() => setShowExport((v) => !v)}
+                disabled={!activeContent}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
                 <Download className="h-3.5 w-3.5" /> Export
               </button>
-              <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 w-28 rounded-xl py-1 bg-card border border-border shadow-xl">
-                {(["md", "txt", "json"] as const).map((fmt) => (
-                  <button key={fmt} onClick={() => exportPrompt("prompt", activeContent, fmt)}
-                    className="block w-full px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all">.{fmt}</button>
-                ))}
-              </div>
+              {showExport && (
+                <div className="absolute right-0 top-full mt-1 z-20 w-28 rounded-xl py-1 bg-card border border-border shadow-xl">
+                  {(["md", "txt", "json"] as const).map((fmt) => (
+                    <button key={fmt} onClick={() => doExport(fmt)}
+                      className="block w-full px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+                      .{fmt}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
