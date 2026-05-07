@@ -310,10 +310,16 @@ export default function Builder() {
         <div className="p-3 border-t border-border bg-card">
           {showStyle && (
             <div className="flex gap-2 mb-2">
-              <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="Domain (e.g. marketing)"
-                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground" />
-              <input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Tone (e.g. casual)"
-                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground" />
+              <select value={domain} onChange={(e) => setDomain(e.target.value)}
+                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground cursor-pointer">
+                <option value="">Domain</option>
+                {["Marketing","Coding","Writing","Research","Education","Business","Creative","Data Analysis","Legal","Healthcare","Finance","Social Media"].map(d => <option key={d} value={d.toLowerCase()}>{d}</option>)}
+              </select>
+              <select value={tone} onChange={(e) => setTone(e.target.value)}
+                className="flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-none bg-muted border border-border text-foreground cursor-pointer">
+                <option value="">Tone</option>
+                {["Professional","Casual","Formal","Friendly","Technical","Creative","Concise","Persuasive","Empathetic","Authoritative"].map(t => <option key={t} value={t.toLowerCase()}>{t}</option>)}
+              </select>
             </div>
           )}
           <div className="flex gap-2 items-end">
@@ -343,14 +349,32 @@ export default function Builder() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
-            <span className="font-bold text-sm text-foreground">Generated Output</span>
+            {promptVersions ? (
+              <div className="flex gap-1">
+                {([1, 2] as const).map((v) => (
+                  <button key={v} onClick={() => setActiveVersion(v)}
+                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                    style={activeVersion === v ? {
+                      background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
+                    } : {
+                      background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
+                    }}>
+                    {v === 1 ? "V1 Detailed" : "V2 Concise"}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <span className="font-bold text-sm text-foreground">Generated Output</span>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={copyActive} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all">
+            <button onClick={copyActive} disabled={!activeContent}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
             </button>
             <div className="relative group">
-              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all">
+              <button disabled={!activeContent}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
                 <Download className="h-3.5 w-3.5" /> Export
               </button>
               <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 w-28 rounded-xl py-1 bg-card border border-border shadow-xl">
@@ -362,22 +386,6 @@ export default function Builder() {
             </div>
           </div>
         </div>
-
-        {/* Version toggle */}
-        {promptVersions && (
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-card">
-            {([1, 2] as const).map((v) => (
-              <button key={v} onClick={() => setActiveVersion(v)} className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                style={activeVersion === v ? {
-                  background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 16px hsl(var(--primary) / 0.3)",
-                } : {
-                  background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
-                }}>
-                {v === 1 ? "V1 · Detailed" : "V2 · Concise"}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Output content */}
         <div className="flex-1 overflow-y-auto p-4">
