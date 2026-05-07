@@ -28,7 +28,7 @@ export function Navbar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 16px hsl(var(--primary) / 0.5)" }}>
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span style={{ background: "linear-gradient(135deg, #a78bfa, #38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }} className="font-extrabold">
+          <span className="font-extrabold text-white">
             PromptCraft
           </span>
         </Link>
