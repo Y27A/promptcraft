@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap, Sparkles, RefreshCw } from "lucide-react";
+import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, Zap, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -38,7 +38,6 @@ export default function Builder() {
   const [domain, setDomain] = useState("");
   const [tone, setTone] = useState("");
   const [mode, setMode] = useState<"beginner" | "advanced">("beginner");
-  const [showStyle, setShowStyle] = useState(false);
   const [lastUserInput, setLastUserInput] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -240,6 +239,37 @@ export default function Builder() {
           </div>
         </div>
 
+        {/* Domain + Tone pills — always visible */}
+        <div className="border-b border-border bg-card/50 px-4 py-2 overflow-x-auto">
+          <div className="flex items-center gap-3 min-w-max">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Domain</span>
+              <div className="flex gap-1">
+                {["Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"].map(d => (
+                  <button key={d} onClick={() => setDomain(domain === d.toLowerCase() ? "" : d.toLowerCase())}
+                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap"
+                    style={domain === d.toLowerCase() ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="w-px h-4 bg-border shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Tone</span>
+              <div className="flex gap-1">
+                {["Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"].map(t => (
+                  <button key={t} onClick={() => setTone(tone === t.toLowerCase() ? "" : t.toLowerCase())}
+                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap"
+                    style={tone === t.toLowerCase() ? { background: "hsl(var(--secondary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
@@ -317,42 +347,7 @@ export default function Builder() {
 
         {/* Input */}
         <div className="px-3 pt-3 pb-2 border-t border-border bg-card">
-          {showStyle && (
-            <div className="mb-3 space-y-2">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">Domain</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social Media"].map(d => (
-                    <button key={d} onClick={() => setDomain(domain === d.toLowerCase() ? "" : d.toLowerCase())}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                      style={domain === d.toLowerCase() ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">Tone</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic","Authoritative"].map(t => (
-                    <button key={t} onClick={() => setTone(tone === t.toLowerCase() ? "" : t.toLowerCase())}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                      style={tone === t.toLowerCase() ? { background: "hsl(var(--secondary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
           <div className="flex gap-2 items-end">
-            <button onClick={() => setShowStyle((v) => !v)}
-              className="p-2 rounded-xl transition-all border text-xs font-medium flex items-center gap-1"
-              style={showStyle || domain || tone ? { background: "hsl(var(--primary) / 0.1)", border: "1px solid hsl(var(--primary) / 0.3)", color: "hsl(var(--primary))" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
-              title="Style options">
-              <ChevronDown className={`h-4 w-4 transition-transform ${showStyle ? "rotate-180" : ""}`} />
-              {(domain || tone) && <span className="text-[10px]">{[domain, tone].filter(Boolean).join(" · ")}</span>}
-            </button>
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }

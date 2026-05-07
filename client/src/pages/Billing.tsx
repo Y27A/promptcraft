@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { CheckCircle, Zap, Star, Infinity } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Page, FadeUp, AnimCard } from "@/components/ui/page-motion";
+import { Page, FadeUp } from "@/components/ui/page-motion";
 
 const PLANS = [
   {
     tier: "free",
-    price: "$0 / mo",
+    monthly: 0,
+    yearly: 0,
     dailyLimit: 10,
     features: [
       "10 prompt generations per day",
@@ -17,7 +19,8 @@ const PLANS = [
   },
   {
     tier: "pro",
-    price: "$9 / mo",
+    monthly: 9,
+    yearly: 79,
     dailyLimit: 200,
     features: [
       "200 prompt generations per day",
@@ -29,7 +32,8 @@ const PLANS = [
   },
   {
     tier: "unlimited",
-    price: "$29 / mo",
+    monthly: 25,
+    yearly: 199,
     dailyLimit: -1,
     features: [
       "Unlimited generations",
@@ -50,6 +54,7 @@ const PLAN_COLORS = {
 
 export default function Billing() {
   usePageTitle("Pricing");
+  const [yearly, setYearly] = useState(false);
 
   return (
     <Page className="mx-auto max-w-5xl px-4 py-16">
@@ -59,6 +64,27 @@ export default function Billing() {
         <p className="mt-2 text-sm text-muted-foreground italic">
           Stripe is not available in the GCC region — upgrades are processed manually. Contact us to upgrade.
         </p>
+
+        {/* Billing toggle */}
+        <div className="mt-8 inline-flex items-center gap-3 rounded-2xl p-1.5" style={{ background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))" }}>
+          <button
+            onClick={() => setYearly(false)}
+            className="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={!yearly ? { background: "hsl(var(--card))", color: "hsl(var(--foreground))", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" } : { color: "hsl(var(--muted-foreground))" }}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setYearly(true)}
+            className="relative px-5 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={yearly ? { background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 20px hsl(var(--primary) / 0.4)" } : { color: "hsl(var(--muted-foreground))" }}
+          >
+            Yearly
+            <span className="absolute -top-2.5 -right-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsl(var(--secondary))", color: "white" }}>
+              SAVE 30%
+            </span>
+          </button>
+        </div>
       </FadeUp>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -66,6 +92,12 @@ export default function Billing() {
           const Icon = PLAN_ICONS[plan.tier as keyof typeof PLAN_ICONS] ?? Zap;
           const borderClass = PLAN_COLORS[plan.tier as keyof typeof PLAN_COLORS] ?? "border-border";
           const isPro = plan.tier === "pro";
+          const price = plan.tier === "free" ? "$0" : yearly ? `$${plan.yearly}` : `$${plan.monthly}`;
+          const period = plan.tier === "free" ? "forever" : yearly ? "/ year" : "/ month";
+          const savingsNote = yearly && plan.tier !== "free"
+            ? `vs $${plan.monthly * 12}/yr billed monthly`
+            : null;
+
           return (
             <div
               key={plan.tier}
@@ -82,7 +114,11 @@ export default function Billing() {
                 </div>
                 <div>
                   <h2 className="font-bold text-lg capitalize">{plan.tier}</h2>
-                  <p className="text-2xl font-extrabold">{plan.price}</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-2xl font-extrabold">{price}</p>
+                    <span className="text-sm text-muted-foreground">{period}</span>
+                  </div>
+                  {savingsNote && <p className="text-[10px] text-secondary mt-0.5">{savingsNote}</p>}
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-5">
@@ -102,7 +138,7 @@ export default function Billing() {
                 </a>
               ) : (
                 <a
-                  href="mailto:yousifalbalooshi@gmail.com?subject=PromptCraft%20Upgrade"
+                  href={`mailto:yousifalbalooshi@gmail.com?subject=PromptCraft%20Upgrade%20%E2%80%94%20${plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)}%20(${yearly ? "Yearly" : "Monthly"})`}
                   className={`block text-center rounded-xl py-2.5 text-sm font-medium transition-all ${
                     isPro
                       ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 hover:scale-[1.02]"
@@ -116,6 +152,10 @@ export default function Billing() {
           );
         })}
       </div>
+
+      <FadeUp className="mt-10 text-center text-sm text-muted-foreground">
+        All prices in USD. Payment via BenefitPay or bank transfer. Tier activated within 24 hours after confirmation.
+      </FadeUp>
     </Page>
   );
 }

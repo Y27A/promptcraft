@@ -22,7 +22,7 @@ This must be a LONG, EXTREMELY DETAILED prompt of 600–1000 words. Write every 
 - Edge Cases & Fallbacks: What to do when the request is ambiguous, incomplete, or unusual.
 
 ### Version 2: Concise
-A sharp, focused prompt of 80–150 words capturing the core intent only. No extra sections.
+A well-developed prompt of 150–250 words. Include role, clear task instructions, output format, and tone. No multi-section headers — write as flowing paragraphs.
 
 Format each inside a markdown code block under its heading. After both versions, write 2 sentences explaining the key difference between them.`;
 

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Zap, ChevronDown, LayoutDashboard, History, Settings, Sun, Moon, Menu, X, Palette, ShieldCheck } from "lucide-react";
+import { Zap, ChevronDown, LayoutDashboard, History, Settings, Menu, X, Palette, ShieldCheck } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
 import { cn } from "@/lib/utils";
@@ -25,9 +25,7 @@ export function Navbar() {
   const paletteRef = useRef<HTMLDivElement>(null);
   const { isSignedIn, user } = useSafeUser();
   const firstName = user?.firstName;
-  const { resolved, setThemePref, accentHex, setAccent } = useTheme();
-
-  const toggleTheme = () => setThemePref(resolved === "dark" ? "light" : "dark");
+  const { accentHex, setAccent } = useTheme();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -76,16 +74,6 @@ export function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg transition-all hover:scale-110"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-            title={resolved === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-
           {/* Color picker */}
           <div className="relative" ref={paletteRef}>
             <button
