@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap, Sparkles } from "lucide-react";
+import { Send, Plus, Copy, Download, Save, Share2, TerminalSquare, ChevronDown, Zap, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -39,6 +39,7 @@ export default function Builder() {
   const [tone, setTone] = useState("");
   const [mode, setMode] = useState<"beginner" | "advanced">("beginner");
   const [showStyle, setShowStyle] = useState(false);
+  const [lastUserInput, setLastUserInput] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,6 +76,7 @@ export default function Builder() {
     const content = input.trim();
     if (!content || streaming) return;
     setInput("");
+    setLastUserInput(content);
 
     const userMsg: Message = { role: "user", content, id: Date.now().toString() };
     setMessages((prev) => [...prev, userMsg]);
@@ -220,9 +222,16 @@ export default function Builder() {
             >
               {mode === "advanced" ? "⚡ Advanced" : "Beginner"}
             </button>
+            {lastUserInput && !streaming && (
+              <button onClick={() => { setInput(lastUserInput); setTimeout(() => send(), 0); }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
+                title="Regenerate last response">
+                <RefreshCw className="h-3 w-3" /> Regen
+              </button>
+            )}
             {isSignedIn && (
               <button
-                onClick={() => { setMessages([]); setSessionId(null); setPromptVersions(null); }}
+                onClick={() => { setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput(""); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
               >
                 <Plus className="h-3 w-3" /> New
@@ -390,9 +399,15 @@ export default function Builder() {
         {/* Output content */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeContent ? (
-            <div className="rounded-2xl p-5 bg-card border border-border">
-              <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{activeContent}</ReactMarkdown>
-            </div>
+            <>
+              <div className="rounded-2xl p-5 bg-card border border-border">
+                <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{activeContent}</ReactMarkdown>
+              </div>
+              <div className="flex gap-3 mt-2 px-1 text-[10px] text-muted-foreground/60">
+                <span>{activeContent.split(/\s+/).filter(Boolean).length} words</span>
+                <span>{activeContent.length} chars</span>
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-16">
               <div className="relative mb-5">
