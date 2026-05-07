@@ -2,6 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Restore path encoded by 404.html for GitHub Pages SPA routing
+      (function(l) {
+        if (l.search[1] === 'p') {
+          var decoded = l.search.slice(1).split('&').reduce(function(q, s) {
+            var kv = s.split('=');
+            if (kv[0] === 'p') q.path = '/' + kv[1].replace(/~and~/g, '&');
+            if (kv[0] === 'q') q.query = '?' + kv[1].replace(/~and~/g, '&');
+            return q;
+          }, { path: '', query: '' });
+          window.history.replaceState(null, null,
+            '/promptcraft' + decoded.path + decoded.query + l.hash
+          );
+        }
+      }(window.location));
+    </script>
     <link rel="icon" type="image/svg+xml" href="/promptcraft/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Talk to us like a friend. We'll craft the perfect prompt for you." />
