@@ -46,7 +46,7 @@ function TokenSync() {
 
 function AppShell() {
   const [location] = useLocation();
-  const noFooter = false;
+  const noFooter = location === "/builder";
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />

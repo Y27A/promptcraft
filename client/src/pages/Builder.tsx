@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
+import { streamGroq, SYSTEM_PROMPT } from "@/lib/groq";
 
 function extractVersions(text: string): { v1: string; v2: string } | null {
   const v1 = text.match(/###\s*Version\s*1[^#\n]*\n+([\s\S]+?)(?=###\s*Version\s*2|$)/i);
@@ -68,6 +69,8 @@ export default function Builder() {
     }
   }, []);
 
+  const DIRECT = !!import.meta.env.VITE_GROQ_API_KEY;
+
   const send = useCallback(async () => {
     const content = input.trim();
     if (!content || streaming) return;
@@ -81,9 +84,24 @@ export default function Builder() {
     setStreaming(true);
 
     try {
-      let url: string;
-      let body: object;
+      if (DIRECT) {
+        // Call Groq directly from frontend (no backend needed)
+        let sysPrompt = SYSTEM_PROMPT;
+        if (mode === "advanced") sysPrompt += "\n\nAdvanced mode: reference chain-of-thought and few-shot techniques.";
+        if (mode === "beginner") sysPrompt += "\n\nBeginner mode: use plain language, explain any technical terms.";
+        if (domain || tone) sysPrompt += `\n\nUser context — domain: ${domain || "general"}, tone: ${tone || "neutral"}.`;
 
+        const history = messages.map((m) => ({ role: m.role, content: m.content }));
+        await streamGroq(
+          [{ role: "system", content: sysPrompt }, ...history, { role: "user", content }],
+          (delta) => setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: m.content + delta } : m)),
+          () => setStreaming(false),
+        );
+        setTrialUsed((u) => u + 1);
+        return;
+      }
+
+      // Backend path (when server is deployed)
       if (isSignedIn) {
         let sid = sessionId;
         if (!sid) {
@@ -93,17 +111,14 @@ export default function Builder() {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             credentials: "include",
           });
-          const data = await res.json();
-          sid = data.id;
+          sid = (await res.json()).id;
           setSessionId(sid);
         }
-        url = `${API_BASE}/api/openai/sessions/${sid}/messages`;
         const token = await getToken();
-        body = { content, mode, domain: domain || undefined, style: tone || undefined };
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE}/api/openai/sessions/${sid}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ content, mode, domain: domain || undefined, style: tone || undefined }),
           credentials: "include",
         });
         await handleStream(response, assistantId);
@@ -129,7 +144,7 @@ export default function Builder() {
     } finally {
       setStreaming(false);
     }
-  }, [input, streaming, isSignedIn, sessionId, mode, domain, tone, getToken]);
+  }, [input, streaming, isSignedIn, sessionId, mode, domain, tone, getToken, messages]);
 
   async function handleStream(response: Response, assistantId: string) {
     const reader = response.body?.getReader();
