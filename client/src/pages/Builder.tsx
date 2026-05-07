@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw } from "lucide-react";
+import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -48,7 +48,10 @@ export default function Builder() {
   const [tone, setTone] = useState("");
   const [lastUserInput, setLastUserInput] = useState("");
   const [showExport, setShowExport] = useState(false);
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const [savedToProject, setSavedToProject] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
+  const projectRef = useRef<HTMLDivElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -111,10 +114,10 @@ export default function Builder() {
     }
   }, []);
 
-  // Close export dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) setShowExport(false);
+      if (projectRef.current && !projectRef.current.contains(e.target as Node)) setShowProjectPicker(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -237,6 +240,25 @@ export default function Builder() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast.success("Copied!");
+  };
+
+  const saveToProject = (projectId: string) => {
+    try {
+      const history: any[] = JSON.parse(localStorage.getItem("pc:history") ?? "[]");
+      const key = sessionKeyRef.current;
+      const idx = history.findIndex(h => h.id === key);
+      if (idx >= 0) {
+        history[idx].projectId = projectId;
+        localStorage.setItem("pc:history", JSON.stringify(history));
+        const proj: any[] = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
+        const name = proj.find(p => p.id === projectId)?.name ?? "project";
+        setSavedToProject(projectId);
+        toast.success(`Saved to "${name}"`);
+      } else {
+        toast.error("Generate something first, then save to a project");
+      }
+    } catch {}
+    setShowProjectPicker(false);
   };
 
   const doExport = (fmt: "md" | "txt" | "json") => {
@@ -417,6 +439,35 @@ export default function Builder() {
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
             </button>
+            {/* Save to project */}
+            <div className="relative" ref={projectRef}>
+              <button onClick={() => setShowProjectPicker(v => !v)} disabled={!activeContent}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
+                title="Save to project">
+                {savedToProject ? <Check className="h-3.5 w-3.5 text-primary" /> : <FolderPlus className="h-3.5 w-3.5" />}
+                Save
+              </button>
+              {showProjectPicker && (
+                <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl py-1 bg-card border border-border shadow-xl">
+                  {(() => {
+                    const projects: any[] = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
+                    return projects.length === 0 ? (
+                      <div className="px-3 py-3 text-xs text-muted-foreground text-center">
+                        No projects yet.<br />
+                        <a href="/projects" className="text-primary underline">Create one →</a>
+                      </div>
+                    ) : projects.map((p: any) => (
+                      <button key={p.id} onClick={() => saveToProject(p.id)}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+                        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+                        {p.name}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+
             {/* Export — click-based dropdown */}
             <div className="relative" ref={exportRef}>
               <button

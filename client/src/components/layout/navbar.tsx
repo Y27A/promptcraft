@@ -6,8 +6,8 @@ import { useSafeUser } from "@/lib/clerk-safe";
 
 const NAV_LINKS = [
   { href: "/builder", label: "Builder" },
+  { href: "/projects", label: "Projects" },
   { href: "/templates", label: "Templates" },
-  { href: "/gallery", label: "Gallery" },
   { href: "/billing", label: "Pricing" },
   { href: "/guide", label: "Guide" },
 ];
