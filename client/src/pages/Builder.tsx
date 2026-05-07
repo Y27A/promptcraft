@@ -50,6 +50,7 @@ export default function Builder() {
   const [showExport, setShowExport] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [savedToProject, setSavedToProject] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
   const exportRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +60,11 @@ export default function Builder() {
   // Persist current chat
   useEffect(() => { try { localStorage.setItem("pc:msgs", JSON.stringify(messages)); } catch {} }, [messages]);
   useEffect(() => { try { localStorage.setItem("pc:vers", JSON.stringify(promptVersions)); } catch {} }, [promptVersions]);
+
+  // Auto-switch to output on mobile when done
+  useEffect(() => {
+    if (!streaming && promptVersions) setMobileTab("output");
+  }, [streaming, promptVersions]);
 
   // Save to history after streaming ends
   useEffect(() => {
@@ -281,9 +287,21 @@ export default function Builder() {
   } as React.CSSProperties;
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
+    <div className="flex flex-col flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
+      {/* Mobile tabs */}
+      <div className="md:hidden flex border-b border-border bg-card">
+        {(["chat","output"] as const).map(tab => (
+          <button key={tab} onClick={() => setMobileTab(tab)}
+            className="flex-1 py-2.5 text-sm font-semibold capitalize transition-all"
+            style={mobileTab === tab ? { color: "hsl(var(--primary))", borderBottom: "2px solid hsl(var(--primary))" } : { color: "hsl(var(--muted-foreground))" }}>
+            {tab === "chat" ? "💬 Chat" : "✨ Output"}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
       {/* Chat pane */}
-      <div className="flex flex-col flex-1 min-w-0 border-r border-border">
+      <div className={`flex-col flex-1 min-w-0 border-r border-border ${mobileTab === "chat" ? "flex" : "hidden md:flex"}`}>
 
         {/* Chat header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
@@ -413,7 +431,7 @@ export default function Builder() {
       </div>
 
       {/* Output pane */}
-      <div className="hidden md:flex flex-col w-[45%] min-w-[340px] max-w-[600px]">
+      <div className={`flex-col w-full md:w-[45%] md:min-w-[340px] md:max-w-[600px] ${mobileTab === "output" ? "flex" : "hidden md:flex"}`}>
         {/* Output header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-2">
@@ -515,6 +533,7 @@ export default function Builder() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
