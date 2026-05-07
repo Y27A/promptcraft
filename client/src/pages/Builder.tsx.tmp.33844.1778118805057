@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark } from "lucide-react";
+import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -267,17 +267,6 @@ export default function Builder() {
     setShowProjectPicker(false);
   };
 
-  const savePrompt = () => {
-    if (!activeContent) return;
-    try {
-      const saved = JSON.parse(localStorage.getItem("pc:saved") ?? "[]");
-      const title = messages.find(m => m.role === "user")?.content.slice(0, 70) ?? "Saved prompt";
-      saved.unshift({ id: Date.now().toString(), title, content: activeContent, version: activeVersion, ts: Date.now() });
-      localStorage.setItem("pc:saved", JSON.stringify(saved.slice(0, 200)));
-      toast.success("Prompt saved to library");
-    } catch {}
-  };
-
   const doExport = (fmt: "md" | "txt" | "json") => {
     exportPrompt(`prompt-v${activeVersion}`, activeContent, fmt);
     setShowExport(false);
@@ -468,11 +457,6 @@ export default function Builder() {
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
             </button>
-            <button onClick={savePrompt} disabled={!activeContent}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
-              title="Save to library">
-              <Bookmark className="h-3.5 w-3.5" />
-            </button>
             {/* Save to project */}
             <div className="relative" ref={projectRef}>
               <button onClick={() => setShowProjectPicker(v => !v)} disabled={!activeContent}
@@ -549,7 +533,6 @@ export default function Builder() {
             </div>
           )}
         </div>
-      </div>
       </div>
     </div>
   );

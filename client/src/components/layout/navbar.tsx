@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Zap, ChevronDown, LayoutDashboard, History, Settings, Menu, X, ShieldCheck } from "lucide-react";
+import { Zap, ChevronDown, LayoutDashboard, History, Settings, Menu, X, ShieldCheck, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSafeUser } from "@/lib/clerk-safe";
@@ -74,6 +74,7 @@ export function Navbar() {
                   onMouseLeave={() => setDropOpen(false)}>
                   {[
                     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+                    { href: "/saved", icon: Bookmark, label: "Saved" },
                     { href: "/history", icon: History, label: "History" },
                     { href: "/settings", icon: Settings, label: "Settings" },
                     { href: "/admin", icon: ShieldCheck, label: "Admin" },
