@@ -298,7 +298,7 @@ export default function Landing() {
                 exit={{ opacity: 0, y: -14, filter: "blur(6px)" }}
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 className="inline-block"
-                style={{ background: `linear-gradient(135deg, ${V.primary}, ${V.secondary})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                style={{ background: "linear-gradient(135deg, #a78bfa, #38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 {ROTATING_WORDS[wordIdx]}
               </motion.span>
             </AnimatePresence>
