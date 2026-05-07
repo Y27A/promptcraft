@@ -29,11 +29,18 @@ export default function Builder() {
   const search = useSearch();
   const params = new URLSearchParams(search);
 
+  const LS_MSGS = "pc:msgs";
+  const LS_VERS = "pc:vers";
+
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_MSGS) ?? "[]"); } catch { return []; }
+  });
   const [streaming, setStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [promptVersions, setPromptVersions] = useState<{ v1: string; v2: string } | null>(null);
+  const [promptVersions, setPromptVersions] = useState<{ v1: string; v2: string } | null>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_VERS) ?? "null"); } catch { return null; }
+  });
   const [activeVersion, setActiveVersion] = useState<1 | 2>(1);
   const [copied, setCopied] = useState(false);
   const [trialUsed, setTrialUsed] = useState(0);
@@ -46,6 +53,10 @@ export default function Builder() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist chat to localStorage
+  useEffect(() => { try { localStorage.setItem(LS_MSGS, JSON.stringify(messages)); } catch {} }, [messages]);
+  useEffect(() => { try { localStorage.setItem(LS_VERS, JSON.stringify(promptVersions)); } catch {} }, [promptVersions]);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -243,7 +254,7 @@ export default function Builder() {
             )}
             {isSignedIn && (
               <button
-                onClick={() => { setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput(""); }}
+                onClick={() => { setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput(""); localStorage.removeItem(LS_MSGS); localStorage.removeItem(LS_VERS); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
               >
                 <Plus className="h-3 w-3" /> New
