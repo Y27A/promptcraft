@@ -352,6 +352,14 @@ export default function Builder() {
             <span className="font-bold text-sm text-foreground">PromptCraft Builder</span>
           </div>
           <div className="flex items-center gap-2">
+            {!isSignedIn && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                style={quotaExhausted
+                  ? { background: "hsl(0 60% 18%)", color: "hsl(0 70% 65%)" }
+                  : { background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>
+                {quotaExhausted ? "Limit reached" : `${trialLimit - trialUsed} / ${trialLimit} free`}
+              </span>
+            )}
             {lastUserInput && !streaming && (
               <button onClick={() => { setInput(lastUserInput); setTimeout(() => send(), 0); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
@@ -455,14 +463,8 @@ export default function Builder() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Quota banner */}
-        {!isSignedIn && (
-          <div className="px-4 py-2 text-xs text-center border-t border-border"
-            style={{ background: quotaExhausted ? "hsl(0 60% 12%)" : "hsl(var(--muted))", color: quotaExhausted ? "hsl(0 70% 65%)" : "hsl(var(--muted-foreground))" }}>
-            {quotaExhausted
-              ? <>Trial limit reached — <Link href="/sign-up" className="font-semibold underline">Sign up for 25 free →</Link></>
-              : `${trialLimit - trialUsed} of ${trialLimit} free trials remaining`}
-          </div>
+        {/* Quota banner removed — moved to header */}
+        {false && (
         )}
 
         {/* Input */}
