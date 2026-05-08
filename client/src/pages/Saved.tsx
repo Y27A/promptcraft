@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Bookmark, Trash2, Copy, Search, ExternalLink } from "lucide-react";
+import { Bookmark, Trash2, Copy, Search, ExternalLink, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
@@ -30,6 +30,16 @@ export default function Saved() {
   const copy = (content: string) => {
     navigator.clipboard.writeText(content);
     toast.success("Copied!");
+  };
+
+  const saveAsTemplate = (item: SavedPrompt) => {
+    try {
+      const templates = JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]");
+      if (templates.some((t: any) => t.title === item.title)) { toast.error("Already saved as template"); return; }
+      templates.unshift({ id: Date.now().toString(), title: item.title, content: item.content, category: "general", ts: Date.now() });
+      localStorage.setItem("pc:user-templates", JSON.stringify(templates.slice(0, 50)));
+      toast.success("Saved as template → visible in Templates page");
+    } catch {}
   };
 
   const refine = (content: string) => {
@@ -72,6 +82,9 @@ export default function Saved() {
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => copy(item.content)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Copy">
                     <Copy className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => saveAsTemplate(item)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="Save as template">
+                    <LayoutTemplate className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => exportPrompt(item.title, item.content, "md")} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Export .md">
                     <ExternalLink className="h-3.5 w-3.5" />

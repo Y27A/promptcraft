@@ -458,12 +458,23 @@ export default function Builder() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Trial wall */}
+        {quotaExhausted && (
+          <div className="mx-3 mb-1 mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+            <p className="text-sm font-semibold text-foreground mb-0.5">You've used all 10 free trials</p>
+            <p className="text-xs text-muted-foreground mb-3">Create a free account to keep going</p>
+            <Link href="/sign-up" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              style={{ background: "linear-gradient(135deg, hsl(248 95% 62%), hsl(268 95% 58%))", boxShadow: "0 0 16px hsl(var(--primary) / 0.35)" }}>
+              Sign up free →
+            </Link>
+          </div>
+        )}
         {/* Input */}
-        <div className="px-3 pt-3 pb-2 border-t border-border bg-card">
+        <div className="px-3 pt-2 pb-2 border-t border-border bg-card">
           <div className="flex gap-2 items-end">
             <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder="Describe what you want to prompt… (Enter to send)"
+              placeholder="Describe what you want to prompt… (Enter or Ctrl+Enter to send)"
               disabled={quotaExhausted || streaming} rows={2}
               className="flex-1 resize-none rounded-xl px-3 py-2 text-sm focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-muted border border-border text-foreground" />
             <button onClick={send} disabled={!input.trim() || streaming || quotaExhausted}

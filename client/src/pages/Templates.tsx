@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useSafeAuth, useSafeUser } from "@/lib/clerk-safe";
+import { useSafeUser } from "@/lib/clerk-safe";
 import { Link, useLocation } from "wouter";
-import { Plus, BookOpen, Wand2, Star } from "lucide-react";
+import { Plus, BookOpen, Wand2, Star, Trash2 } from "lucide-react";
 import { Page, FadeUp } from "@/components/ui/page-motion";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { API_BASE } from "@/lib/utils";
+import { toast } from "sonner";
 
 const CATEGORY_COLORS: Record<string, string> = {
   writing: "text-blue-400 bg-blue-400/10 border-blue-400/20",
@@ -137,26 +136,19 @@ const PRESET_TEMPLATES = [
 
 export default function Templates() {
   usePageTitle("Templates");
-  const { getToken } = useSafeAuth();
   const { isSignedIn } = useSafeUser();
   const [, navigate] = useLocation();
   const [category, setCategory] = useState("all");
-
-  const { data: userTemplates = [] } = useQuery({
-    queryKey: ["user-templates"],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) return [];
-      try {
-        const r = await fetch(`${API_BASE}/api/user-templates`, {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-        if (!r.ok) return [];
-        return r.json();
-      } catch { return []; }
-    },
+  const [userTemplates, setUserTemplates] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]"); } catch { return []; }
   });
+
+  const deleteUserTemplate = (id: string) => {
+    const updated = userTemplates.filter((t: any) => t.id !== id);
+    setUserTemplates(updated);
+    localStorage.setItem("pc:user-templates", JSON.stringify(updated));
+    toast.success("Template deleted");
+  };
 
   const allCategories = ["all", ...Array.from(new Set(PRESET_TEMPLATES.map((t) => t.category)))];
   const filtered = category === "all" ? PRESET_TEMPLATES : PRESET_TEMPLATES.filter((t) => t.category === category);
@@ -185,12 +177,12 @@ export default function Templates() {
             <div className="rounded-2xl border border-dashed border-border p-10 text-center">
               <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <p className="font-medium mb-1">No custom templates yet</p>
-              <p className="text-sm text-muted-foreground">Save prompts from the builder to create templates.</p>
+              <p className="text-sm text-muted-foreground">Go to <Link href="/saved" className="text-primary underline">Saved Prompts</Link> and click "Save as template".</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {userTemplates.map((t: any) => (
-                <TemplateCard key={t.id} template={t} onUse={() => handleUseTemplate(t.content ?? t.title)} />
+                <TemplateCard key={t.id} template={t} onUse={() => handleUseTemplate(t.content ?? t.title)} onDelete={() => deleteUserTemplate(t.id)} />
               ))}
             </div>
           )}
@@ -236,7 +228,7 @@ export default function Templates() {
   );
 }
 
-function TemplateCard({ template, onUse }: { template: any; onUse: () => void }) {
+function TemplateCard({ template, onUse, onDelete }: { template: any; onUse: () => void; onDelete?: () => void }) {
   const catColor = CATEGORY_COLORS[template.category] ?? CATEGORY_COLORS.general;
   const diffColor = DIFFICULTY_COLORS[template.difficulty] ?? DIFFICULTY_COLORS.beginner;
 
@@ -249,16 +241,20 @@ function TemplateCard({ template, onUse }: { template: any; onUse: () => void })
         </span>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed flex-1">{template.description}</p>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${diffColor}`}>
-          {template.difficulty}
+          {template.difficulty ?? "custom"}
         </span>
-        <button
-          onClick={onUse}
-          className="flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-        >
-          <Wand2 className="h-3 w-3" /> Use template
-        </button>
+        <div className="flex items-center gap-1">
+          {onDelete && (
+            <button onClick={onDelete} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button onClick={onUse} className="flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+            <Wand2 className="h-3 w-3" /> Use
+          </button>
+        </div>
       </div>
       {template.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1">
