@@ -215,7 +215,7 @@ export default function Builder() {
         addTrial();
         await handleStream(response, assistantId);
       }
-    } catch {
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Generation failed. Please try again.");
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
