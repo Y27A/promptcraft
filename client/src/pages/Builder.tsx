@@ -10,11 +10,17 @@ import { exportPrompt } from "@/lib/export";
 import { streamGroq, SYSTEM_PROMPT } from "@/lib/groq";
 
 function extractVersions(text: string): { v1: string; v2: string } | null {
-  const v1 = text.match(/###\s*Version\s*1[^#\n]*\n+([\s\S]+?)(?=###\s*Version\s*2|$)/i);
-  const v2 = text.match(/###\s*Version\s*2[^#\n]*\n+([\s\S]+?)(?=###\s*Version\s*[3-9]|$)/i);
+  const sep = /#{1,3}\s*Version\s*2/i;
+  const v1Start = text.search(/#{1,3}\s*Version\s*1/i);
+  const v2Start = text.search(sep);
+  if (v1Start === -1 || v2Start === -1) return null;
+  const clean = (s: string) => s.replace(/^[^\n]*\n/, "").replace(/```[\w]*\n?/g, "").replace(/\n?```/g, "").replace(/^---+\s*$/m, "").trim();
+  const v1 = clean(text.slice(v1Start, v2Start));
+  const afterV2 = text.slice(v2Start);
+  const endMatch = afterV2.search(/\n#{1,3}\s*(?!Version\s*2)/);
+  const v2 = clean(endMatch > -1 ? afterV2.slice(0, endMatch) : afterV2);
   if (!v1 || !v2) return null;
-  const clean = (s: string) => s.replace(/```[\w]*\n?/g, "").replace(/\n?```/g, "").trim();
-  return { v1: clean(v1[1]), v2: clean(v2[1]) };
+  return { v1, v2 };
 }
 
 type Message = { role: "user" | "assistant"; content: string; id: string };
@@ -548,7 +554,7 @@ export default function Builder() {
           {activeContent ? (
             <>
               <div className="rounded-2xl p-5 border border-border" style={{ background: "hsl(230 35% 9%)" }}>
-                <ReactMarkdown className="prose prose-sm prose-invert max-w-none" components={{
+                <ReactMarkdown className="prose prose-base prose-invert max-w-none" components={{
                   p: ({children}) => <p style={{ color: "hsl(220 20% 90%)", lineHeight: 1.75 }}>{children}</p>,
                   li: ({children}) => <li style={{ color: "hsl(220 20% 85%)" }}>{children}</li>,
                   strong: ({children}) => <strong style={{ color: "hsl(0 0% 100%)", fontWeight: 700 }}>{children}</strong>,
