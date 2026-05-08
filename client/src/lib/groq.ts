@@ -1,5 +1,10 @@
 const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+const PROXY_URL = import.meta.env.VITE_PROXY_URL as string | undefined;
 const MODEL = "llama-3.3-70b-versatile";
+// Use proxy (key hidden server-side) or fall back to direct Groq (local dev)
+const API_URL = PROXY_URL
+  ? `${PROXY_URL.replace(/\/$/, "")}/v1/chat/completions`
+  : "https://api.groq.com/openai/v1/chat/completions";
 
 export const SYSTEM_PROMPT = `You are PromptCraft AI — a world-class prompt engineer. You turn plain-English requests into production-ready prompts that consistently produce exceptional AI outputs.
 
@@ -58,16 +63,19 @@ export async function streamGroq(
 ) {
   if (!GROQ_KEY) throw new Error("No VITE_GROQ_API_KEY");
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  if (!PROXY_URL && !GROQ_KEY) throw new Error("No API key or proxy configured");
+
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${GROQ_KEY}`,
+      ...(!PROXY_URL && GROQ_KEY ? { Authorization: `Bearer ${GROQ_KEY}` } : {}),
     },
     body: JSON.stringify({ model: MODEL, stream: true, messages, temperature: 0.7, max_tokens: 4096 }),
   });
 
-  if (!res.ok) throw new Error(`Groq ${res.status}`);
+  if (res.status === 429) throw new Error("Daily limit reached — try again tomorrow");
+  if (!res.ok) throw new Error(`Generation failed (${res.status})`);
 
   const reader = res.body!.getReader();
   const dec = new TextDecoder();

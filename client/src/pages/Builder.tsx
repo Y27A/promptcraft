@@ -209,7 +209,7 @@ export default function Builder() {
         await handleStream(response, assistantId);
       }
     } catch {
-      toast.error("Generation failed. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Generation failed. Please try again.");
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setStreaming(false);
