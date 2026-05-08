@@ -42,8 +42,8 @@ export default function Builder() {
   });
   const [activeVersion, setActiveVersion] = useState<1 | 2>(1);
   const [copied, setCopied] = useState(false);
-  const [trialUsed, setTrialUsed] = useState(0);
-  const [trialLimit, setTrialLimit] = useState(10);
+  const [trialUsed, setTrialUsed] = useState(() => { try { return parseInt(localStorage.getItem("pc:trialUsed") ?? "0", 10); } catch { return 0; } });
+  const trialLimit = 10;
   const [domain, setDomain] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultDomain ?? ""; } catch { return ""; } });
   const [tone, setTone] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultTone ?? ""; } catch { return ""; } });
   const [lastUserInput, setLastUserInput] = useState("");
@@ -83,14 +83,7 @@ export default function Builder() {
     } catch {}
   }, [streaming]);
 
-  useEffect(() => {
-    if (!isSignedIn) {
-      fetch(`${API_BASE}/api/trial/usage`, { credentials: "include" })
-        .then((r) => r.json())
-        .then((d) => { setTrialUsed(d.used); setTrialLimit(d.limit); })
-        .catch(() => {});
-    }
-  }, [isSignedIn]);
+  const addTrial = () => setTrialUsed(u => { const n = u + 1; try { localStorage.setItem("pc:trialUsed", String(n)); } catch {} return n; });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -135,6 +128,10 @@ export default function Builder() {
   const send = useCallback(async () => {
     const content = input.trim();
     if (!content || streaming) return;
+    if (!isSignedIn && trialUsed >= trialLimit) {
+      toast.error("Trial limit reached — sign up for 25 free trials");
+      return;
+    }
     setInput("");
     setLastUserInput(content);
 
@@ -165,7 +162,7 @@ export default function Builder() {
             });
           },
         );
-        setTrialUsed((u) => u + 1);
+        addTrial();
         return;
       }
 
@@ -202,7 +199,7 @@ export default function Builder() {
           setStreaming(false);
           return;
         }
-        setTrialUsed((u) => u + 1);
+        addTrial();
         await handleStream(response, assistantId);
       }
     } catch {
