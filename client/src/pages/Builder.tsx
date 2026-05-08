@@ -463,10 +463,6 @@ export default function Builder() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Quota banner removed — moved to header */}
-        {false && (
-        )}
-
         {/* Input */}
         <div className="px-3 pt-3 pb-2 border-t border-border bg-card">
           <div className="flex gap-2 items-end">
