@@ -339,21 +339,19 @@ export default function Builder() {
                 <RefreshCw className="h-3 w-3" /> Regen
               </button>
             )}
-            {isSignedIn && (
-              <button
-                onClick={() => {
-                  const newKey = Date.now().toString();
-                  sessionKeyRef.current = newKey;
-                  localStorage.setItem("pc:sessionKey", newKey);
-                  localStorage.removeItem("pc:msgs");
-                  localStorage.removeItem("pc:vers");
-                  setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput("");
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
-              >
-                <Plus className="h-3 w-3" /> New
-              </button>
-            )}
+            <button
+              onClick={() => {
+                const newKey = Date.now().toString();
+                sessionKeyRef.current = newKey;
+                localStorage.setItem("pc:sessionKey", newKey);
+                localStorage.removeItem("pc:msgs");
+                localStorage.removeItem("pc:vers");
+                setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput("");
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
+            >
+              <Plus className="h-3 w-3" /> New chat
+            </button>
           </div>
         </div>
 
@@ -428,7 +426,7 @@ export default function Builder() {
           <div className="px-4 py-2 text-xs text-center border-t border-border"
             style={{ background: quotaExhausted ? "hsl(0 60% 12%)" : "hsl(var(--muted))", color: quotaExhausted ? "hsl(0 70% 65%)" : "hsl(var(--muted-foreground))" }}>
             {quotaExhausted
-              ? <>Trial limit reached — <Link href="/sign-up" className="font-semibold underline">Sign up free</Link> to continue</>
+              ? <>Trial limit reached — <Link href="/sign-up" className="font-semibold underline">Sign up for 25 free →</Link></>
               : `${trialLimit - trialUsed} of ${trialLimit} free trials remaining`}
           </div>
         )}
@@ -537,8 +535,16 @@ export default function Builder() {
         <div className="flex-1 overflow-y-auto p-4">
           {activeContent ? (
             <>
-              <div className="rounded-2xl p-5 bg-card border border-border">
-                <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{activeContent}</ReactMarkdown>
+              <div className="rounded-2xl p-5 border border-border" style={{ background: "hsl(230 35% 9%)" }}>
+                <ReactMarkdown className="prose prose-sm prose-invert max-w-none" components={{
+                  p: ({children}) => <p style={{ color: "hsl(220 20% 90%)", lineHeight: 1.75 }}>{children}</p>,
+                  li: ({children}) => <li style={{ color: "hsl(220 20% 85%)" }}>{children}</li>,
+                  strong: ({children}) => <strong style={{ color: "hsl(0 0% 100%)", fontWeight: 700 }}>{children}</strong>,
+                  h1: ({children}) => <h1 style={{ color: "hsl(0 0% 100%)" }}>{children}</h1>,
+                  h2: ({children}) => <h2 style={{ color: "hsl(0 0% 98%)" }}>{children}</h2>,
+                  h3: ({children}) => <h3 style={{ color: "hsl(0 0% 96%)" }}>{children}</h3>,
+                  code: ({children}) => <code style={{ background: "hsl(230 30% 15%)", color: "hsl(248 95% 80%)", padding: "0.1em 0.35em", borderRadius: "0.3em", fontSize: "0.85em" }}>{children}</code>,
+                }}>{activeContent}</ReactMarkdown>
               </div>
               <div className="flex gap-3 mt-2 px-1 text-[10px] text-muted-foreground/60">
                 <span>{activeContent.split(/\s+/).filter(Boolean).length} words</span>

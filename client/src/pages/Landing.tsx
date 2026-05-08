@@ -315,13 +315,13 @@ export default function Landing() {
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
             {!isSignedIn ? (
               <>
-                <MagneticButton href="/sign-up" className="group inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold text-white"
+                <MagneticButton href="/builder" className="group inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold text-white"
                   style={{ background: "linear-gradient(135deg, hsl(248 95% 62%), hsl(268 95% 58%))", boxShadow: `0 0 40px ${V.primaryGlow(0.35)}, 0 4px 20px ${V.primaryGlow(0.2)}` }}>
-                  Start for free <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  Open Builder <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </MagneticButton>
-                <MagneticButton href="/builder" className="inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold"
+                <MagneticButton href="/sign-up" className="inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold"
                   style={{ background: V.card, border: `1px solid ${V.border}`, color: V.fg }}>
-                  See it live ↓
+                  Sign up — get 25 free ✨
                 </MagneticButton>
               </>
             ) : (

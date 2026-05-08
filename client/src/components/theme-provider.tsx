@@ -13,7 +13,7 @@ interface ThemeCtx {
 }
 
 const Ctx = createContext<ThemeCtx>({
-  themePref: "system", resolved: "dark",
+  themePref: "dark", resolved: "dark",
   setThemePref: () => {}, accentHex: "#7c3aed", setAccent: () => {},
 });
 
@@ -34,7 +34,7 @@ function applyAccent(hex: string) {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themePref, setThemePrefState] = useState<ThemePref>(
-    () => (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "system"
+    () => (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "dark"
   );
   const [accentHex, setAccentState] = useState<string>(
     () => localStorage.getItem("promptcraft:accent") ?? "#7c3aed"
