@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { Zap, ChevronDown, LayoutDashboard, History, Settings, Menu, X, ShieldCheck, Bookmark } from "lucide-react";
+import { Zap, ChevronDown, LayoutDashboard, History, Settings, Menu, X, ShieldCheck, Bookmark, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useClerk } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 import { useSafeUser } from "@/lib/clerk-safe";
 
@@ -17,6 +18,7 @@ export function Navbar() {
   const [dropOpen, setDropOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isSignedIn, user } = useSafeUser();
+  const { signOut } = useClerk();
   const firstName = user?.firstName;
 
   return (
@@ -86,6 +88,14 @@ export function Navbar() {
                       {label}
                     </Link>
                   ))}
+                  <div className="mx-1 mt-1 pt-1" style={{ borderTop: "1px solid hsl(var(--border))" }}>
+                    <button onClick={() => { setDropOpen(false); signOut(); }}
+                      className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm transition-all rounded-xl hover:bg-red-500/10"
+                      style={{ color: "hsl(0 72% 65%)" }}>
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -119,6 +129,12 @@ export function Navbar() {
                 {[{ href: "/dashboard", label: "Dashboard" }, { href: "/history", label: "History" }, { href: "/settings", label: "Settings" }].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</Link>
                 ))}
+                <button onClick={() => { setMobileOpen(false); signOut(); }}
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-red-500/10 transition-all"
+                  style={{ color: "hsl(0 72% 65%)" }}>
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
               </>
             )}
           </div>
