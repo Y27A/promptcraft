@@ -89,7 +89,7 @@ export function Navbar() {
                     </Link>
                   ))}
                   <div className="mx-1 mt-1 pt-1" style={{ borderTop: "1px solid hsl(var(--border))" }}>
-                    <button onClick={() => { setDropOpen(false); signOut(); }}
+                    <button onClick={() => { setDropOpen(false); signOut({ redirectUrl: `${import.meta.env.BASE_URL}` }); }}
                       className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm transition-all rounded-xl hover:bg-red-500/10"
                       style={{ color: "hsl(0 72% 65%)" }}>
                       <LogOut className="h-4 w-4" />
@@ -129,7 +129,7 @@ export function Navbar() {
                 {[{ href: "/dashboard", label: "Dashboard" }, { href: "/history", label: "History" }, { href: "/settings", label: "Settings" }].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setMobileOpen(false)} className="flex px-3 py-2.5 text-sm font-medium rounded-xl" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</Link>
                 ))}
-                <button onClick={() => { setMobileOpen(false); signOut(); }}
+                <button onClick={() => { setMobileOpen(false); signOut({ redirectUrl: `${import.meta.env.BASE_URL}` }); }}
                   className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-red-500/10 transition-all"
                   style={{ color: "hsl(0 72% 65%)" }}>
                   <LogOut className="h-4 w-4" />
