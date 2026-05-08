@@ -1,29 +1,27 @@
 import { Link } from "wouter";
-import { Zap, Github, Twitter, Mail, ArrowUpRight } from "lucide-react";
+import { Zap, Github, Mail, ArrowUpRight } from "lucide-react";
+import { useSafeAuth } from "@/lib/clerk-safe";
 
-const LINKS = {
-  Product: [
-    { href: "/builder", label: "Builder" },
-    { href: "/templates", label: "Templates" },
-    { href: "/gallery", label: "Gallery" },
-    { href: "/saved", label: "Saved Prompts" },
-    { href: "/projects", label: "Projects" },
-    { href: "/billing", label: "Pricing" },
-    { href: "/guide", label: "Guide" },
-  ],
-  Account: [
-    { href: "/sign-up", label: "Sign up free" },
-    { href: "/sign-in", label: "Sign in" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/settings", label: "Settings" },
-  ],
-  Legal: [
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
-  ],
-};
+const PRODUCT = [
+  { href: "/builder", label: "Builder" },
+  { href: "/templates", label: "Templates" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/saved", label: "Saved Prompts" },
+  { href: "/projects", label: "Projects" },
+  { href: "/billing", label: "Pricing" },
+  { href: "/guide", label: "Guide" },
+];
+const LEGAL = [
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
+];
 
 export function Footer() {
+  const { isSignedIn } = useSafeAuth();
+  const accountLinks = isSignedIn
+    ? [{ href: "/dashboard", label: "Dashboard" }, { href: "/history", label: "History" }, { href: "/settings", label: "Settings" }]
+    : [{ href: "/sign-up", label: "Sign up free" }, { href: "/sign-in", label: "Sign in" }];
+  const sections = [{ label: "Product", links: PRODUCT }, { label: "Account", links: accountLinks }, { label: "Legal", links: LEGAL }];
   return (
     <footer className="relative mt-auto overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary) / 0.1)" }}>
       {/* Ambient glow */}
@@ -68,9 +66,9 @@ export function Footer() {
           </div>
 
           {/* Link columns */}
-          {Object.entries(LINKS).map(([section, links]) => (
-            <div key={section}>
-              <h4 className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: "hsl(230 15% 50%)" }}>{section}</h4>
+          {sections.map(({ label, links }) => (
+            <div key={label}>
+              <h4 className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: "hsl(230 15% 50%)" }}>{label}</h4>
               <ul className="space-y-3">
                 {links.map((l) => (
                   <li key={l.href}>
