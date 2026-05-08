@@ -495,7 +495,7 @@ export default function Builder() {
                     return projects.length === 0 ? (
                       <div className="px-3 py-3 text-xs text-muted-foreground text-center">
                         No projects yet.<br />
-                        <a href="/projects" className="text-primary underline">Create one →</a>
+                        <Link href="/projects" className="text-primary underline">Create one →</Link>
                       </div>
                     ) : projects.map((p: any) => (
                       <button key={p.id} onClick={() => saveToProject(p.id)}
