@@ -8,7 +8,6 @@ const LINKS = {
     { href: "/gallery", label: "Gallery" },
     { href: "/saved", label: "Saved Prompts" },
     { href: "/projects", label: "Projects" },
-    { href: "/extension", label: "Extension" },
     { href: "/billing", label: "Pricing" },
     { href: "/guide", label: "Guide" },
   ],

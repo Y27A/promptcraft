@@ -1,5 +1,7 @@
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Puzzle, Zap, MousePointerClick, KeyRound, CheckCircle } from "lucide-react";
+import { Puzzle, Zap, MousePointerClick, KeyRound, CheckCircle, Lock } from "lucide-react";
+import { Link } from "wouter";
+import { useSafeAuth } from "@/lib/clerk-safe";
 
 const STEPS = [
   { icon: KeyRound, title: "Get a free Groq API key", body: <>Go to <a href="https://console.groq.com" target="_blank" className="text-primary underline">console.groq.com</a>, sign up free, and create an API key.</> },
@@ -12,6 +14,20 @@ const SUPPORTED = ["ChatGPT", "Claude", "Gemini", "Perplexity", "Poe"];
 
 export default function Extension() {
   usePageTitle("Browser Extension");
+  const { isSignedIn, isLoaded } = useSafeAuth();
+  if (isLoaded && !isSignedIn) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4">
+        <Lock className="h-8 w-8 text-primary" />
+      </div>
+      <h2 className="text-2xl font-bold mb-2">Sign in to access the Extension</h2>
+      <p className="text-muted-foreground mb-6">The PromptCraft browser extension is available to registered users.</p>
+      <div className="flex gap-3">
+        <Link href="/sign-up" className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/30 hover:scale-[1.02] transition-all">Sign up free</Link>
+        <Link href="/sign-in" className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sign in</Link>
+      </div>
+    </div>
+  );
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
       <div className="mb-12 text-center">
