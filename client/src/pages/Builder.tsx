@@ -42,17 +42,13 @@ export default function Builder() {
   const search = useSearch();
   const params = new URLSearchParams(search);
 
-  const sessionKeyRef = useRef(localStorage.getItem("pc:sessionKey") || Date.now().toString());
+  const sessionKeyRef = useRef(Date.now().toString());
 
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try { return JSON.parse(localStorage.getItem("pc:msgs") ?? "[]"); } catch { return []; }
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [promptVersions, setPromptVersions] = useState<{ v1: string; v2: string } | null>(() => {
-    try { return JSON.parse(localStorage.getItem("pc:vers") ?? "null"); } catch { return null; }
-  });
+  const [promptVersions, setPromptVersions] = useState<{ v1: string; v2: string } | null>(null);
   const [activeVersion, setActiveVersion] = useState<1 | 2>(1);
   const [copied, setCopied] = useState(false);
   const [trialUsed, setTrialUsed] = useState(() => { try { const today = new Date().toDateString(); if (localStorage.getItem("pc:trialDate") !== today) { localStorage.setItem("pc:trialDate", today); localStorage.setItem("pc:trialUsed", "0"); return 0; } return parseInt(localStorage.getItem("pc:trialUsed") ?? "0", 10); } catch { return 0; } });
@@ -72,9 +68,6 @@ export default function Builder() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Persist current chat
-  useEffect(() => { try { localStorage.setItem("pc:msgs", JSON.stringify(messages)); } catch {} }, [messages]);
-  useEffect(() => { try { localStorage.setItem("pc:vers", JSON.stringify(promptVersions)); } catch {} }, [promptVersions]);
 
   // Auto-switch to output on mobile when done
   useEffect(() => {
