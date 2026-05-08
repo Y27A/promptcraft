@@ -62,8 +62,12 @@ export default function Builder() {
   const [mode, setMode] = useState<Mode>("standard");
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
+  const [domainOpen, setDomainOpen] = useState(false);
+  const [toneOpen, setToneOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
+  const domainRef = useRef<HTMLDivElement>(null);
+  const toneRef = useRef<HTMLDivElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -125,6 +129,8 @@ export default function Builder() {
     const handler = (e: MouseEvent) => {
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) setShowExport(false);
       if (projectRef.current && !projectRef.current.contains(e.target as Node)) setShowProjectPicker(false);
+      if (domainRef.current && !domainRef.current.contains(e.target as Node)) setDomainOpen(false);
+      if (toneRef.current && !toneRef.current.contains(e.target as Node)) setToneOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -300,17 +306,6 @@ export default function Builder() {
 
   const quotaExhausted = !isSignedIn && trialUsed >= trialLimit;
 
-  const selectStyle = {
-    background: "hsl(var(--muted))",
-    border: "1px solid hsl(var(--border))",
-    color: "hsl(var(--muted-foreground))",
-    borderRadius: "0.5rem",
-    padding: "0.25rem 0.5rem",
-    fontSize: "0.75rem",
-    outline: "none",
-    cursor: "pointer",
-  } as React.CSSProperties;
-
   return (
     <div className="flex flex-col flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
       {/* Onboarding banner */}
@@ -381,27 +376,72 @@ export default function Builder() {
         {/* Mode selector */}
         <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-card/50 overflow-x-auto scrollbar-none">
           {MODES.map(m => (
-            <button key={m.id} onClick={() => setMode(m.id)}
-              title={m.desc}
-              className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-              style={mode === m.id
-                ? { background: "hsl(var(--primary))", color: "white" }
-                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "1px solid hsl(var(--border))" }}>
-              {m.label}
-            </button>
+            <div key={m.id} className="relative group shrink-0">
+              <button onClick={() => setMode(m.id)}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                style={mode === m.id
+                  ? { background: "hsl(var(--primary))", color: "white" }
+                  : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "1px solid hsl(var(--border))" }}>
+                {m.label}
+              </button>
+              {/* Tooltip */}
+              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div className="rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap shadow-xl"
+                  style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", color: "hsl(var(--foreground))" }}>
+                  {m.desc}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "hsl(var(--border))" }} />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Domain + Tone dropdowns */}
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-card/50">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Domain</span>
-          <select value={domain} onChange={(e) => setDomain(e.target.value)} style={selectStyle}>
-            {DOMAINS.map((d) => <option key={d} value={d.toLowerCase()}>{d || "Any"}</option>)}
-          </select>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tone</span>
-          <select value={tone} onChange={(e) => setTone(e.target.value)} style={selectStyle}>
-            {TONES.map((t) => <option key={t} value={t.toLowerCase()}>{t || "Any"}</option>)}
-          </select>
+        {/* Domain + Tone custom dropdowns */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Domain</span>
+          <div className="relative" ref={domainRef}>
+            <button onClick={() => { setDomainOpen(v => !v); setToneOpen(false); }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+              style={{ background: domain ? "hsl(var(--primary) / 0.12)" : "hsl(var(--muted))", border: `1px solid ${domain ? "hsl(var(--primary) / 0.35)" : "hsl(var(--border))"}`, color: domain ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}>
+              {domain ? domain.charAt(0).toUpperCase() + domain.slice(1) : "Any"}
+              <svg className="h-3 w-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            {domainOpen && (
+              <div className="absolute top-full left-0 mt-1 z-50 rounded-xl py-1 w-36 shadow-xl"
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+                {DOMAINS.map(d => (
+                  <button key={d} onClick={() => { setDomain(d.toLowerCase()); setDomainOpen(false); }}
+                    className="flex items-center justify-between w-full px-3 py-1.5 text-xs text-left transition-all hover:bg-white/5"
+                    style={{ color: domain === d.toLowerCase() ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}>
+                    {d || "Any"}
+                    {domain === d.toLowerCase() && <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0 ml-2">Tone</span>
+          <div className="relative" ref={toneRef}>
+            <button onClick={() => { setToneOpen(v => !v); setDomainOpen(false); }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+              style={{ background: tone ? "hsl(var(--primary) / 0.12)" : "hsl(var(--muted))", border: `1px solid ${tone ? "hsl(var(--primary) / 0.35)" : "hsl(var(--border))"}`, color: tone ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}>
+              {tone ? tone.charAt(0).toUpperCase() + tone.slice(1) : "Any"}
+              <svg className="h-3 w-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            {toneOpen && (
+              <div className="absolute top-full left-0 mt-1 z-50 rounded-xl py-1 w-36 shadow-xl"
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+                {TONES.map(t => (
+                  <button key={t} onClick={() => { setTone(t.toLowerCase()); setToneOpen(false); }}
+                    className="flex items-center justify-between w-full px-3 py-1.5 text-xs text-left transition-all hover:bg-white/5"
+                    style={{ color: tone === t.toLowerCase() ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}>
+                    {t || "Any"}
+                    {tone === t.toLowerCase() && <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Messages */}
