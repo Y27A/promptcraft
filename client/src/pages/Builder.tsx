@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark } from "lucide-react";
+import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -42,7 +42,7 @@ export default function Builder() {
   });
   const [activeVersion, setActiveVersion] = useState<1 | 2>(1);
   const [copied, setCopied] = useState(false);
-  const [trialUsed, setTrialUsed] = useState(() => { try { return parseInt(localStorage.getItem("pc:trialUsed") ?? "0", 10); } catch { return 0; } });
+  const [trialUsed, setTrialUsed] = useState(() => { try { const today = new Date().toDateString(); if (localStorage.getItem("pc:trialDate") !== today) { localStorage.setItem("pc:trialDate", today); localStorage.setItem("pc:trialUsed", "0"); return 0; } return parseInt(localStorage.getItem("pc:trialUsed") ?? "0", 10); } catch { return 0; } });
   const trialLimit = 10;
   const [domain, setDomain] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultDomain ?? ""; } catch { return ""; } });
   const [tone, setTone] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultTone ?? ""; } catch { return ""; } });
@@ -276,6 +276,16 @@ export default function Builder() {
     } catch {}
   };
 
+  const sharePrompt = () => {
+    if (!activeContent) return;
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(activeContent)));
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}share/${encoded}`;
+      navigator.clipboard.writeText(url);
+      toast.success("Share link copied!");
+    } catch { toast.error("Failed to copy link"); }
+  };
+
   const doExport = (fmt: "md" | "txt" | "json") => {
     exportPrompt(`prompt-v${activeVersion}`, activeContent, fmt);
     setShowExport(false);
@@ -471,6 +481,11 @@ export default function Builder() {
             <button onClick={copyActive} disabled={!activeContent}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
+            </button>
+            <button onClick={sharePrompt} disabled={!activeContent}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
+              title="Copy share link">
+              <Share2 className="h-3.5 w-3.5" /> Share
             </button>
             <button onClick={savePrompt} disabled={!activeContent}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
