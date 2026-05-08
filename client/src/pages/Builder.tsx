@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
-import { streamGroq, SYSTEM_PROMPT } from "@/lib/groq";
+import { streamGroq, buildSystemPrompt, type Mode } from "@/lib/groq";
 
 function extractVersions(text: string): { v1: string; v2: string } | null {
   const sep = /#{1,3}\s*Version\s*2/i;
@@ -27,6 +27,13 @@ type Message = { role: "user" | "assistant"; content: string; id: string };
 
 const DOMAINS = ["","Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"];
 const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"];
+const MODES: { id: Mode; label: string; desc: string }[] = [
+  { id: "quick",     label: "⚡ Quick",     desc: "One short ready-to-paste prompt" },
+  { id: "standard",  label: "✦ Standard",  desc: "Detailed + concise versions" },
+  { id: "advanced",  label: "🔬 Advanced",  desc: "Maximum depth & examples" },
+  { id: "developer", label: "💻 Developer", desc: "Code-task optimised" },
+  { id: "marketing", label: "📣 Marketing", desc: "Copy & persuasion focused" },
+];
 
 export default function Builder() {
   usePageTitle("Builder");
@@ -56,6 +63,7 @@ export default function Builder() {
   const [showExport, setShowExport] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [savedToProject, setSavedToProject] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>("standard");
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
   const exportRef = useRef<HTMLDivElement>(null);
@@ -150,8 +158,7 @@ export default function Builder() {
 
     try {
       if (DIRECT) {
-        let sysPrompt = SYSTEM_PROMPT + "\n\nAdvanced mode: reference chain-of-thought and few-shot techniques.";
-        if (domain || tone) sysPrompt += `\n\nUser context — domain: ${domain || "general"}, tone: ${tone || "neutral"}.`;
+        const sysPrompt = buildSystemPrompt(mode, domain, tone);
         const history = messages.map((m) => ({ role: m.role, content: m.content }));
         await streamGroq(
           [{ role: "system", content: sysPrompt }, ...history, { role: "user", content }],
@@ -366,6 +373,20 @@ export default function Builder() {
               <Plus className="h-3 w-3" /> New chat
             </button>
           </div>
+        </div>
+
+        {/* Mode selector */}
+        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-card/50 overflow-x-auto scrollbar-none">
+          {MODES.map(m => (
+            <button key={m.id} onClick={() => setMode(m.id)}
+              title={m.desc}
+              className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+              style={mode === m.id
+                ? { background: "hsl(var(--primary))", color: "white" }
+                : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "1px solid hsl(var(--border))" }}>
+              {m.label}
+            </button>
+          ))}
         </div>
 
         {/* Domain + Tone dropdowns */}
