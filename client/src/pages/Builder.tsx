@@ -344,18 +344,18 @@ export default function Builder() {
             </div>
             <span className="font-bold text-sm text-foreground">PromptCraft Builder</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {isSignedIn
-              ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>✦ Unlimited</span>
-              : <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={quotaExhausted ? { background: "hsl(0 60% 18%)", color: "hsl(0 70% 65%)" } : { background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>
-                  {quotaExhausted ? "Limit reached" : `${trialLimit - trialUsed} / ${trialLimit} free`}
+              ? <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>✦ Unlimited</span>
+              : <span className="text-xs font-semibold px-2 py-1 rounded-full" style={quotaExhausted ? { background: "hsl(0 60% 18%)", color: "hsl(0 70% 65%)" } : { background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>
+                  {quotaExhausted ? "Limit reached" : `${trialLimit - trialUsed}/${trialLimit}`}
                 </span>
             }
             {lastUserInput && !streaming && (
               <button onClick={() => { setInput(lastUserInput); setTimeout(() => send(), 0); }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
                 title="Regenerate">
-                <RefreshCw className="h-3 w-3" /> Regen
+                <RefreshCw className="h-3 w-3" /><span className="hidden sm:inline ml-0.5">Regen</span>
               </button>
             )}
             <button
@@ -369,10 +369,10 @@ export default function Builder() {
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
             >
-              <Plus className="h-3 w-3" /> New chat
+              <Plus className="h-3 w-3" /><span className="hidden sm:inline ml-0.5">New</span>
             </button>
             <Link href="/history"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground">
+              className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground">
               <History className="h-3 w-3" /> History
             </Link>
           </div>
@@ -478,50 +478,53 @@ export default function Builder() {
       {/* Output pane */}
       <div className={`flex-col w-full md:w-[45%] md:min-w-[340px] md:max-w-[600px] ${mobileTab === "output" ? "flex" : "hidden md:flex"}`}>
         {/* Output header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
-            {/* V1 / V2 always visible */}
-            <div className="flex gap-1">
-              {([1, 2] as const).map((v) => (
-                <button key={v} onClick={() => setActiveVersion(v)}
-                  disabled={!promptVersions}
-                  className="px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-30"
-                  style={activeVersion === v && promptVersions ? {
-                    background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
-                  } : {
-                    background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
-                  }}>
-                  {v === 1 ? "V1 Detailed" : "V2 Concise"}
-                </button>
-              ))}
+        <div className="flex flex-col px-4 pt-3 pb-2 border-b border-border bg-card gap-2">
+          {/* Row 1: icon + version tabs */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
+              <div className="flex gap-1">
+                {([1, 2] as const).map((v) => (
+                  <button key={v} onClick={() => setActiveVersion(v)}
+                    disabled={!promptVersions}
+                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-30"
+                    style={activeVersion === v && promptVersions ? {
+                      background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
+                    } : {
+                      background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
+                    }}>
+                    {v === 1 ? "V1 Detailed" : "V2 Concise"}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5">
+            {/* Copy always visible on its own — primary action */}
             <button onClick={copyActive} disabled={!activeContent}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
-              <Copy className="h-3.5 w-3.5" />{copied ? "Copied!" : "Copy"}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
+              style={activeContent ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? "Copied!" : "Copy"}
             </button>
+          </div>
+          {/* Row 2: secondary actions — scrollable */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             <button onClick={sharePrompt} disabled={!activeContent}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
-              title="Copy share link">
+              className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
               <Share2 className="h-3.5 w-3.5" /> Share
             </button>
             <button onClick={savePrompt} disabled={!activeContent}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
-              title="Save to library">
-              <Bookmark className="h-3.5 w-3.5" />
+              className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
+              <Bookmark className="h-3.5 w-3.5" /> Save
             </button>
             {/* Save to project */}
-            <div className="relative" ref={projectRef}>
+            <div className="relative shrink-0" ref={projectRef}>
               <button onClick={() => setShowProjectPicker(v => !v)} disabled={!activeContent}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40"
-                title="Save to project">
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
                 {savedToProject ? <Check className="h-3.5 w-3.5 text-primary" /> : <FolderPlus className="h-3.5 w-3.5" />}
-                Save
+                Project
               </button>
               {showProjectPicker && (
-                <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl py-1 bg-card border border-border shadow-xl">
+                <div className="absolute left-0 top-full mt-1 z-20 w-48 rounded-xl py-1 bg-card border border-border shadow-xl">
                   {(() => {
                     const projects: any[] = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
                     return projects.length === 0 ? (
@@ -540,17 +543,14 @@ export default function Builder() {
                 </div>
               )}
             </div>
-
-            {/* Export — click-based dropdown */}
-            <div className="relative" ref={exportRef}>
-              <button
-                onClick={() => setShowExport((v) => !v)}
-                disabled={!activeContent}
+            {/* Export */}
+            <div className="relative shrink-0" ref={exportRef}>
+              <button onClick={() => setShowExport((v) => !v)} disabled={!activeContent}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted border border-border text-muted-foreground hover:text-foreground transition-all disabled:opacity-40">
                 <Download className="h-3.5 w-3.5" /> Export
               </button>
               {showExport && (
-                <div className="absolute right-0 top-full mt-1 z-20 w-28 rounded-xl py-1 bg-card border border-border shadow-xl">
+                <div className="absolute left-0 top-full mt-1 z-20 w-28 rounded-xl py-1 bg-card border border-border shadow-xl">
                   {(["md", "txt", "json"] as const).map((fmt) => (
                     <button key={fmt} onClick={() => doExport(fmt)}
                       className="block w-full px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
