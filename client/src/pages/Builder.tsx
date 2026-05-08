@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
-import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark, Share2 } from "lucide-react";
+import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark, Share2, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -345,14 +345,12 @@ export default function Builder() {
             <span className="font-bold text-sm text-foreground">PromptCraft Builder</span>
           </div>
           <div className="flex items-center gap-2">
-            {!isSignedIn && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={quotaExhausted
-                  ? { background: "hsl(0 60% 18%)", color: "hsl(0 70% 65%)" }
-                  : { background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>
-                {quotaExhausted ? "Limit reached" : `${trialLimit - trialUsed} / ${trialLimit} free`}
-              </span>
-            )}
+            {isSignedIn
+              ? <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>✦ Unlimited</span>
+              : <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={quotaExhausted ? { background: "hsl(0 60% 18%)", color: "hsl(0 70% 65%)" } : { background: "hsl(var(--primary) / 0.12)", color: "hsl(var(--primary))" }}>
+                  {quotaExhausted ? "Limit reached" : `${trialLimit - trialUsed} / ${trialLimit} free`}
+                </span>
+            }
             {lastUserInput && !streaming && (
               <button onClick={() => { setInput(lastUserInput); setTimeout(() => send(), 0); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
@@ -373,6 +371,10 @@ export default function Builder() {
             >
               <Plus className="h-3 w-3" /> New chat
             </button>
+            <Link href="/history"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground">
+              <History className="h-3 w-3" /> History
+            </Link>
           </div>
         </div>
 
