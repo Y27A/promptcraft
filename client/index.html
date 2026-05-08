@@ -8,7 +8,7 @@
         if (l.search[1] === 'p') {
           var decoded = l.search.slice(1).split('&').reduce(function(q, s) {
             var kv = s.split('=');
-            if (kv[0] === 'p') q.path = '/' + kv[1].replace(/~and~/g, '&');
+            if (kv[0] === 'p') q.path = kv[1].replace(/~and~/g, '&');
             if (kv[0] === 'q') q.query = '?' + kv[1].replace(/~and~/g, '&');
             return q;
           }, { path: '', query: '' });
