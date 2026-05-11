@@ -184,7 +184,7 @@ export async function streamGroq(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(!PROXY_URL && GROQ_KEY ? { Authorization: `Bearer ${GROQ_KEY}` } : {}),
+      ...(GROQ_KEY ? { Authorization: `Bearer ${GROQ_KEY}` } : {}),
     },
     body: JSON.stringify({ model: MODEL, stream: true, messages, temperature: 0.7, max_tokens: 4096 }),
   });
