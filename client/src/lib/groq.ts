@@ -178,7 +178,7 @@ export async function streamGroq(
   onDelta: (delta: string) => void,
   onDone: () => void,
 ) {
-  if (!PROXY_URL && !GROQ_KEY) throw new Error("No API key or proxy configured");
+  if (!GROQ_KEY) throw new Error("No API key configured");
 
   const res = await fetch(API_URL, {
     method: "POST",
