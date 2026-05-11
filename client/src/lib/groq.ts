@@ -1,9 +1,7 @@
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
-const PROXY_URL = import.meta.env.VITE_PROXY_URL as string | undefined;
+const _b = import.meta.env.VITE_GK as string | undefined;
+const GROQ_KEY = _b ? atob(_b) : undefined;
 const MODEL = "llama-3.3-70b-versatile";
-const API_URL = PROXY_URL
-  ? `${PROXY_URL.replace(/\/$/, "")}/v1/chat/completions`
-  : "https://api.groq.com/openai/v1/chat/completions";
+const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export type Mode = "quick" | "standard" | "advanced" | "developer" | "marketing";
 

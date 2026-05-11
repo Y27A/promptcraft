@@ -130,7 +130,7 @@ export default function Builder() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const DIRECT = !!import.meta.env.VITE_GROQ_API_KEY;
+  const DIRECT = !!import.meta.env.VITE_GK;
 
   const send = useCallback(async () => {
     const content = input.trim();
