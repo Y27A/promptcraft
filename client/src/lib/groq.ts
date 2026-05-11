@@ -3,7 +3,7 @@ const GROQ_KEY = _k ? "gsk_" + _k : undefined;
 const MODEL = "llama-3.3-70b-versatile";
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-export type Mode = "quick" | "standard" | "advanced" | "developer" | "marketing";
+export type Mode = "quick" | "standard" | "advanced" | "developer" | "marketing" | "plan" | "action";
 
 const BASE = `You are PromptCraft AI — a world-class prompt engineer. You turn plain-English requests into production-ready prompts.
 
@@ -165,6 +165,24 @@ A sample headline + first paragraph demonstrating the tone and hook in action.
 160–220 words. One-line role. Audience, hook strategy, and CTA instruction in tight paragraphs. Key {variables}: {product_name}, {audience}, {pain_point}, {cta}.
 
 After both: "Key difference: [one sentence]"`,
+
+  plan: `${BASE}
+
+When given a request, output TWO clearly separated sections:
+
+## 🗺️ Plan
+4–6 numbered steps explaining your reasoning — what role you'll assign, what structure, what {variables}, what edge cases to handle. Be specific and concise.
+
+## ✦ Prompt
+The complete production-ready prompt based on your plan. 150–300 words. No V1/V2 split. Include all key {variables}.
+
+After the prompt write: "Would you like to adjust anything?"`,
+
+  action: `${BASE}
+
+Output ONLY a clean, concise, ready-to-execute prompt — no explanations, no headers, no preamble.
+80–150 words. Include {variables} for anything customisable.
+The app will automatically run this prompt and show the user the real AI output.`,
 };
 
 export function buildSystemPrompt(mode: Mode, domain?: string, tone?: string): string {

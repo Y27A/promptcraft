@@ -9,6 +9,14 @@ import { API_BASE } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
 import { streamGroq, buildSystemPrompt, type Mode } from "@/lib/groq";
 
+function extractPlan(text: string): { plan: string; prompt: string } | null {
+  const idx = text.search(/##\s*✦\s*Prompt/i);
+  if (idx === -1) return null;
+  const plan = text.slice(0, idx).replace(/##\s*🗺️?\s*Plan\s*/i, "").trim();
+  const prompt = text.slice(idx).replace(/##\s*✦\s*Prompt\s*/i, "").trim();
+  return plan && prompt ? { plan, prompt } : null;
+}
+
 function extractVersions(text: string): { v1: string; v2: string } | null {
   const sep = /#{1,3}\s*Version\s*2/i;
   const v1Start = text.search(/#{1,3}\s*Version\s*1/i);
@@ -33,6 +41,8 @@ const MODES: { id: Mode; label: string; desc: string }[] = [
   { id: "advanced",  label: "🔬 Advanced",  desc: "Maximum depth & examples" },
   { id: "developer", label: "💻 Developer", desc: "Code-task optimised" },
   { id: "marketing", label: "📣 Marketing", desc: "Copy & persuasion focused" },
+  { id: "plan",      label: "🗺️ Plan",      desc: "See reasoning + final prompt" },
+  { id: "action",    label: "▶ Action",    desc: "Generate prompt & run it instantly" },
 ];
 
 export default function Builder() {
@@ -62,6 +72,10 @@ export default function Builder() {
   const [mode, setMode] = useState<Mode>("standard");
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
+  const [actionResult, setActionResult] = useState("");
+  const [actionStreaming, setActionStreaming] = useState(false);
+  const [planData, setPlanData] = useState<{ plan: string; prompt: string } | null>(null);
+  const [actionTab, setActionTab] = useState<"prompt"|"result">("prompt");
   const exportRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +105,22 @@ export default function Builder() {
   }, [streaming]);
 
   const addTrial = () => setTrialUsed(u => { const n = u + 1; try { localStorage.setItem("pc:trialUsed", String(n)); } catch {} return n; });
+
+  const runAction = useCallback(async (generatedPrompt: string) => {
+    setActionResult("");
+    setActionStreaming(true);
+    setActionTab("result");
+    try {
+      await streamGroq(
+        [{ role: "user", content: generatedPrompt }],
+        (delta) => setActionResult(r => r + delta),
+        () => setActionStreaming(false),
+      );
+    } catch (err) {
+      setActionStreaming(false);
+      toast.error("Action execution failed");
+    }
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -161,8 +191,16 @@ export default function Builder() {
             setMessages((prev) => {
               const last = prev.find((m) => m.id === assistantId);
               if (last) {
-                const versions = extractVersions(last.content);
-                if (versions) { setPromptVersions(versions); setActiveVersion(1); }
+                if (mode === "plan") {
+                  const pd = extractPlan(last.content);
+                  if (pd) { setPlanData(pd); setPromptVersions(null); }
+                } else if (mode === "action") {
+                  setActionTab("prompt");
+                  runAction(last.content);
+                } else {
+                  const versions = extractVersions(last.content);
+                  if (versions) { setPromptVersions(versions); setActiveVersion(1); }
+                }
               }
               return prev;
             });
@@ -241,9 +279,14 @@ export default function Builder() {
     if (versions) { setPromptVersions(versions); setActiveVersion(1); }
   }
 
-  const activeContent = promptVersions
+  const rawAssistant = [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+  const activeContent = mode === "plan"
+    ? (planData ? ((actionTab as string) === "plan" ? planData.plan : planData.prompt) : rawAssistant)
+    : mode === "action"
+    ? (actionTab === "result" ? actionResult : rawAssistant)
+    : promptVersions
     ? (activeVersion === 1 ? promptVersions.v1 : promptVersions.v2)
-    : [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+    : rawAssistant;
 
   const copyActive = () => {
     navigator.clipboard.writeText(activeContent);
@@ -360,7 +403,7 @@ export default function Builder() {
                 localStorage.setItem("pc:sessionKey", newKey);
                 localStorage.removeItem("pc:msgs");
                 localStorage.removeItem("pc:vers");
-                setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput("");
+                setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput(""); setPlanData(null); setActionResult(""); setActionTab("prompt");
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
             >
@@ -484,26 +527,39 @@ export default function Builder() {
       <div className={`flex-col w-full md:w-[45%] md:min-w-[340px] md:max-w-[600px] ${mobileTab === "output" ? "flex" : "hidden md:flex"}`}>
         {/* Output header */}
         <div className="flex flex-col px-4 pt-3 pb-2 border-b border-border bg-card gap-2">
-          {/* Row 1: icon + version tabs */}
+          {/* Row 1: icon + tabs */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
               <div className="flex gap-1">
-                {([1, 2] as const).map((v) => (
-                  <button key={v} onClick={() => setActiveVersion(v)}
-                    disabled={!promptVersions}
-                    className="px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-30"
-                    style={activeVersion === v && promptVersions ? {
-                      background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)",
-                    } : {
-                      background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))",
-                    }}>
-                    {v === 1 ? "V1 Detailed" : "V2 Concise"}
-                  </button>
-                ))}
+                {mode === "plan" ? (
+                  ["plan","prompt"].map(t => (
+                    <button key={t} onClick={() => setActionTab(t as any)}
+                      className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                      style={(actionTab as string) === t && planData ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))", opacity: planData ? 1 : 0.3 }}>
+                      {t === "plan" ? "🗺️ Plan" : "✦ Prompt"}
+                    </button>
+                  ))
+                ) : mode === "action" ? (
+                  ["prompt","result"].map(t => (
+                    <button key={t} onClick={() => setActionTab(t as any)}
+                      className="px-3 py-1 rounded-full text-xs font-semibold transition-all"
+                      style={actionTab === t ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                      {t === "prompt" ? "📝 Prompt" : "✨ Result"}
+                    </button>
+                  ))
+                ) : (
+                  ([1, 2] as const).map((v) => (
+                    <button key={v} onClick={() => setActiveVersion(v)}
+                      disabled={!promptVersions}
+                      className="px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-30"
+                      style={activeVersion === v && promptVersions ? { background: "hsl(var(--primary))", color: "white", boxShadow: "0 0 12px hsl(var(--primary) / 0.35)" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
+                      {v === 1 ? "V1 Detailed" : "V2 Concise"}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
-            {/* Copy always visible on its own — primary action */}
             <button onClick={copyActive} disabled={!activeContent}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
               style={activeContent ? { background: "hsl(var(--primary))", color: "white" } : { background: "hsl(var(--muted))", border: "1px solid hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}>
@@ -570,6 +626,12 @@ export default function Builder() {
 
         {/* Output content */}
         <div className="flex-1 overflow-y-auto p-4">
+          {mode === "action" && actionTab === "result" && actionStreaming && !actionResult && (
+            <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
+              <span className="flex gap-1">{[0,1,2].map(i => <span key={i} className="h-1.5 w-1.5 rounded-full animate-bounce bg-primary/60" style={{ animationDelay: `${i*0.15}s` }} />)}</span>
+              Running your prompt…
+            </div>
+          )}
           {activeContent ? (
             <>
               <div className="rounded-2xl p-5 border border-border" style={{ background: "hsl(230 35% 9%)" }}>
