@@ -1,5 +1,5 @@
-const _b = import.meta.env.VITE_GK as string | undefined;
-const GROQ_KEY = _b ? atob(_b) : undefined;
+const _k = import.meta.env.VITE_GK as string | undefined;
+const GROQ_KEY = _k ? "gsk_" + _k : undefined;
 const MODEL = "llama-3.3-70b-versatile";
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
