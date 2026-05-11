@@ -27,13 +27,6 @@ type Message = { role: "user" | "assistant"; content: string; id: string };
 
 const DOMAINS = ["","Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"];
 const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"];
-const MODELS = [
-  { id: "llama-3.3-70b-versatile",       label: "Llama 3.3 70B  ✦ Best" },
-  { id: "llama-3.1-8b-instant",          label: "Llama 3.1 8B  ⚡ Fast" },
-  { id: "llama-3.1-70b-versatile",       label: "Llama 3.1 70B  📄 128k ctx" },
-  { id: "gemma2-9b-it",                  label: "Gemma 2 9B  🔵 Google" },
-  { id: "deepseek-r1-distill-llama-70b", label: "DeepSeek R1  🧠 Reasoning" },
-];
 const MODES: { id: Mode; label: string; desc: string }[] = [
   { id: "quick",     label: "⚡ Quick",     desc: "One short ready-to-paste prompt" },
   { id: "standard",  label: "✦ Standard",  desc: "Detailed + concise versions" },
@@ -69,7 +62,6 @@ export default function Builder() {
   const [mode, setMode] = useState<Mode>("standard");
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
-  const [model, setModel] = useState("llama-3.3-70b-versatile");
   const exportRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
@@ -163,7 +155,6 @@ export default function Builder() {
         const history = messages.map((m) => ({ role: m.role, content: m.content }));
         await streamGroq(
           [{ role: "system", content: sysPrompt }, ...history, { role: "user", content }],
-          model,
           (delta) => setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: m.content + delta } : m)),
           () => {
             setStreaming(false);
@@ -223,7 +214,7 @@ export default function Builder() {
     } finally {
       setStreaming(false);
     }
-  }, [input, streaming, isSignedIn, sessionId, domain, tone, model, getToken, messages]);
+  }, [input, streaming, isSignedIn, sessionId, domain, tone, getToken, messages]);
 
   async function handleStream(response: Response, assistantId: string) {
     const reader = response.body?.getReader();
@@ -404,10 +395,6 @@ export default function Builder() {
           <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Tone</span>
           <select value={tone} onChange={(e) => setTone(e.target.value)} style={selectStyle}>
             {TONES.map((t) => <option key={t} value={t.toLowerCase()}>{t || "Any"}</option>)}
-          </select>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Model</span>
-          <select value={model} onChange={(e) => setModel(e.target.value)} style={selectStyle}>
-            {MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
           </select>
         </div>
 

@@ -1,5 +1,6 @@
 const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
 const PROXY_URL = import.meta.env.VITE_PROXY_URL as string | undefined;
+const MODEL = "llama-3.3-70b-versatile";
 const API_URL = PROXY_URL
   ? `${PROXY_URL.replace(/\/$/, "")}/v1/chat/completions`
   : "https://api.groq.com/openai/v1/chat/completions";
@@ -176,7 +177,6 @@ export function buildSystemPrompt(mode: Mode, domain?: string, tone?: string): s
 
 export async function streamGroq(
   messages: { role: "user" | "assistant" | "system"; content: string }[],
-  model: string,
   onDelta: (delta: string) => void,
   onDone: () => void,
 ) {
@@ -188,7 +188,7 @@ export async function streamGroq(
       "Content-Type": "application/json",
       ...(!PROXY_URL && GROQ_KEY ? { Authorization: `Bearer ${GROQ_KEY}` } : {}),
     },
-    body: JSON.stringify({ model, stream: true, messages, temperature: 0.7, max_tokens: 4096 }),
+    body: JSON.stringify({ model: MODEL, stream: true, messages, temperature: 0.7, max_tokens: 4096 }),
   });
 
   if (res.status === 429) throw new Error("Daily limit reached — try again tomorrow");
