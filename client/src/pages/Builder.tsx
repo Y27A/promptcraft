@@ -30,7 +30,7 @@ const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creat
 const MODELS = [
   { id: "llama-3.3-70b-versatile",       label: "Llama 3.3 70B  ✦ Best" },
   { id: "llama-3.1-8b-instant",          label: "Llama 3.1 8B  ⚡ Fast" },
-  { id: "mixtral-8x7b-32768",            label: "Mixtral 8x7B  📄 Long ctx" },
+  { id: "llama-3.1-70b-versatile",       label: "Llama 3.1 70B  📄 128k ctx" },
   { id: "gemma2-9b-it",                  label: "Gemma 2 9B  🔵 Google" },
   { id: "deepseek-r1-distill-llama-70b", label: "DeepSeek R1  🧠 Reasoning" },
 ];
@@ -223,7 +223,7 @@ export default function Builder() {
     } finally {
       setStreaming(false);
     }
-  }, [input, streaming, isSignedIn, sessionId, domain, tone, getToken, messages]);
+  }, [input, streaming, isSignedIn, sessionId, domain, tone, model, getToken, messages]);
 
   async function handleStream(response: Response, assistantId: string) {
     const reader = response.body?.getReader();
