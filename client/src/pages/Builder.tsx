@@ -429,6 +429,17 @@ export default function Builder() {
           ))}
         </div>
 
+        {/* Mode hint for plan/action */}
+        {(mode === "plan" || mode === "action") && (
+          <div className="flex items-center gap-2 px-4 py-2 text-xs border-b border-border"
+            style={{ background: "hsl(var(--primary) / 0.07)", color: "hsl(var(--primary))" }}>
+            {mode === "plan"
+              ? <><span className="text-base">🗺️</span> <span><strong>Plan mode:</strong> describe what you need — the AI will first show its <em>reasoning</em>, then give you the final prompt in two separate tabs.</span></>
+              : <><span className="text-base">▶</span> <span><strong>Action mode:</strong> describe what you need — the AI writes a prompt, then <em>automatically runs it</em> so you see the real output instantly.</span></>
+            }
+          </div>
+        )}
+
         {/* Domain + Tone + Model */}
         <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-card/50 overflow-x-auto scrollbar-none">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Domain</span>
@@ -451,8 +462,12 @@ export default function Builder() {
                   <TerminalSquare className="h-7 w-7" style={{ color: "hsl(var(--primary))" }} />
                 </div>
               </div>
-              <h3 className="font-bold text-lg mb-2 text-foreground">What do you want to prompt?</h3>
-              <p className="text-sm max-w-xs leading-relaxed text-muted-foreground">Describe your goal in plain English and get two production-ready prompts instantly</p>
+              <h3 className="font-bold text-lg mb-2 text-foreground">
+                {mode === "plan" ? "What do you want to build?" : mode === "action" ? "What should the AI do?" : "What do you want to prompt?"}
+              </h3>
+              <p className="text-sm max-w-xs leading-relaxed text-muted-foreground">
+                {mode === "plan" ? "Describe your goal — you'll see the reasoning plan and the final prompt in separate tabs" : mode === "action" ? "Describe a task — a prompt gets written and run automatically, showing you the real AI output" : "Describe your goal in plain English and get two production-ready prompts instantly"}
+              </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {["Write a cold email", "Build a React hook", "Analyze my data", "Summarize this doc"].map((s) => (
                   <button key={s} onClick={() => setInput(s)}
