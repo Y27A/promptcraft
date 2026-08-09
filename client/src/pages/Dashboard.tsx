@@ -4,14 +4,14 @@ import { Zap, FolderOpen, Clock, MessageSquare, ExternalLink, Plus } from "lucid
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeUser } from "@/lib/clerk-safe";
 import { formatAge } from "@/lib/utils";
+import { STORAGE_KEYS, readJSON } from "@/lib/storage";
+import { resumeInBuilder } from "@/lib/builder-nav";
 
 function getStats() {
-  try {
-    const history = JSON.parse(localStorage.getItem("pc:history") ?? "[]");
-    const projects = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
-    const totalMsgs = history.reduce((n: number, h: any) => n + (h.messages?.length ?? 0), 0);
-    return { sessions: history.length, projects: projects.length, messages: totalMsgs, recent: history.slice(0, 5) };
-  } catch { return { sessions: 0, projects: 0, messages: 0, recent: [] }; }
+  const history = readJSON<any[]>(STORAGE_KEYS.history, []);
+  const projects = readJSON<any[]>(STORAGE_KEYS.projects, []);
+  const totalMsgs = history.reduce((n: number, h: any) => n + (h.messages?.length ?? 0), 0);
+  return { sessions: history.length, projects: projects.length, messages: totalMsgs, recent: history.slice(0, 5) };
 }
 
 export default function Dashboard() {
@@ -20,10 +20,7 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const stats = getStats();
 
-  const resume = (entry: any) => {
-    sessionStorage.setItem("pc:resume", JSON.stringify(entry));
-    navigate("/builder?resume=1");
-  };
+  const resume = (entry: any) => resumeInBuilder(navigate, entry);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">

@@ -5,10 +5,9 @@ import { db } from "../db/client";
 import { userSettings } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { getOrCreateSettings, getDailyLimit, getDailyUsageRow } from "../lib/usage";
-import type { Request } from "express";
+import { getUserId } from "../types/auth";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
 
 const PLANS = [
   {
@@ -38,7 +37,7 @@ router.get("/plans", (_req, res) => {
 router.use(requireAuth);
 
 router.get("/settings", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const s = await getOrCreateSettings(userId);
   res.json({
     themePref: s.themePref,
@@ -56,7 +55,7 @@ const updateSchema = z.object({
 });
 
 router.put("/settings", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const body = updateSchema.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
   const [updated] = await db
@@ -68,14 +67,14 @@ router.put("/settings", async (req, res) => {
 });
 
 router.get("/subscription", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const s = await getDailyUsageRow(userId);
   const limit = await getDailyLimit(s.tier);
   res.json({ tier: s.tier, dailyLimit: limit, used: s.dailyGenCount });
 });
 
 router.get("/usage", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const s = await getDailyUsageRow(userId);
   const limit = await getDailyLimit(s.tier);
   res.json({ tier: s.tier, dailyLimit: limit, used: s.dailyGenCount });

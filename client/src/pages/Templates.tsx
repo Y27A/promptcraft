@@ -5,6 +5,8 @@ import { Plus, BookOpen, Wand2, Star, Trash2 } from "lucide-react";
 import { Page, FadeUp } from "@/components/ui/page-motion";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
+import { STORAGE_KEYS, readJSON, writeJSON } from "@/lib/storage";
+import { openBuilderWith } from "@/lib/builder-nav";
 
 const CATEGORY_COLORS: Record<string, string> = {
   writing: "text-blue-400 bg-blue-400/10 border-blue-400/20",
@@ -139,24 +141,21 @@ export default function Templates() {
   const { isSignedIn } = useSafeUser();
   const [, navigate] = useLocation();
   const [category, setCategory] = useState("all");
-  const [userTemplates, setUserTemplates] = useState<any[]>(() => {
-    try { return JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]"); } catch { return []; }
-  });
+  const [userTemplates, setUserTemplates] = useState<any[]>(
+    () => readJSON<any[]>(STORAGE_KEYS.userTemplates, [])
+  );
 
   const deleteUserTemplate = (id: string) => {
     const updated = userTemplates.filter((t: any) => t.id !== id);
     setUserTemplates(updated);
-    localStorage.setItem("pc:user-templates", JSON.stringify(updated));
+    writeJSON(STORAGE_KEYS.userTemplates, updated);
     toast.success("Template deleted");
   };
 
   const allCategories = ["all", ...Array.from(new Set(PRESET_TEMPLATES.map((t) => t.category)))];
   const filtered = category === "all" ? PRESET_TEMPLATES : PRESET_TEMPLATES.filter((t) => t.category === category);
 
-  const handleUseTemplate = (prefill: string) => {
-    sessionStorage.setItem("promptcraft:prefillInput", prefill);
-    navigate("/builder?refine=1");
-  };
+  const handleUseTemplate = (prefill: string) => openBuilderWith(navigate, prefill);
 
   return (
     <Page className="mx-auto max-w-6xl px-4 py-10">

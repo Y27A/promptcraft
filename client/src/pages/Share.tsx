@@ -1,8 +1,8 @@
 import { useParams, Link } from "wouter";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Copy } from "lucide-react";
-import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { copyToClipboard } from "@/lib/clipboard";
 
 export default function SharePage() {
   usePageTitle("Shared Prompt");
@@ -19,8 +19,6 @@ export default function SharePage() {
     </div>
   );
 
-  const copy = () => { navigator.clipboard.writeText(content); toast.success("Copied!"); };
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
       <div className="mb-4 text-xs text-muted-foreground">Shared prompt via PromptCraft</div>
@@ -28,7 +26,7 @@ export default function SharePage() {
         <ReactMarkdown className="prose prose-sm prose-invert max-w-none">{content}</ReactMarkdown>
       </div>
       <div className="flex gap-3 justify-center">
-        <button onClick={copy} className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => copyToClipboard(content)} className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <Copy className="h-4 w-4" /> Copy prompt
         </button>
         <Link href="/sign-up" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/30 hover:scale-[1.02] transition-all">

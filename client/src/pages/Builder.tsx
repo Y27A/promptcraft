@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useSearch, useLocation } from "wouter";
-import { useSafeUser, useSafeAuth } from "@/lib/clerk-safe";
+import { useSafeUser } from "@/lib/clerk-safe";
 import { Send, Plus, Copy, Download, TerminalSquare, Zap, Sparkles, RefreshCw, FolderPlus, Check, Bookmark, Share2, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { API_BASE } from "@/lib/utils";
+import { apiFetch } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
 import { streamGroq, buildSystemPrompt, type Mode } from "@/lib/groq";
+import { STORAGE_KEYS, SESSION_KEYS, readJSON, writeJSON, readString, writeString, removeStored, takeSessionItem } from "@/lib/storage";
+import { copyToClipboard } from "@/lib/clipboard";
+import { readSSEStream } from "@/lib/sse";
 
 function extractPlan(text: string): { plan: string; prompt: string } | null {
   const idx = text.search(/##\s*✦\s*Prompt/i);
@@ -48,7 +51,6 @@ const MODES: { id: Mode; label: string; desc: string }[] = [
 export default function Builder() {
   usePageTitle("Builder");
   const { isSignedIn } = useSafeUser();
-  const { getToken } = useSafeAuth();
   const search = useSearch();
   const params = new URLSearchParams(search);
 
@@ -61,17 +63,25 @@ export default function Builder() {
   const [promptVersions, setPromptVersions] = useState<{ v1: string; v2: string } | null>(null);
   const [activeVersion, setActiveVersion] = useState<1 | 2>(1);
   const [copied, setCopied] = useState(false);
-  const [trialUsed, setTrialUsed] = useState(() => { try { const today = new Date().toDateString(); if (localStorage.getItem("pc:trialDate") !== today) { localStorage.setItem("pc:trialDate", today); localStorage.setItem("pc:trialUsed", "0"); return 0; } return parseInt(localStorage.getItem("pc:trialUsed") ?? "0", 10); } catch { return 0; } });
+  const [trialUsed, setTrialUsed] = useState(() => {
+    const today = new Date().toDateString();
+    if (readString(STORAGE_KEYS.trialDate) !== today) {
+      writeString(STORAGE_KEYS.trialDate, today);
+      writeString(STORAGE_KEYS.trialUsed, "0");
+      return 0;
+    }
+    return parseInt(readString(STORAGE_KEYS.trialUsed) ?? "0", 10);
+  });
   const trialLimit = 10;
-  const [domain, setDomain] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultDomain ?? ""; } catch { return ""; } });
-  const [tone, setTone] = useState(() => { try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}").defaultTone ?? ""; } catch { return ""; } });
+  const [domain, setDomain] = useState(() => readJSON<any>(STORAGE_KEYS.settings, {}).defaultDomain ?? "");
+  const [tone, setTone] = useState(() => readJSON<any>(STORAGE_KEYS.settings, {}).defaultTone ?? "");
   const [lastUserInput, setLastUserInput] = useState("");
   const [showExport, setShowExport] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [savedToProject, setSavedToProject] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("standard");
   const [mobileTab, setMobileTab] = useState<"chat"|"output">("chat");
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem("pc:visited"));
+  const [showOnboarding, setShowOnboarding] = useState(() => !readString(STORAGE_KEYS.visited));
   const [actionResult, setActionResult] = useState("");
   const [actionStreaming, setActionStreaming] = useState(false);
   const [planData, setPlanData] = useState<{ plan: string; prompt: string } | null>(null);
@@ -95,16 +105,16 @@ export default function Builder() {
     if (!hasReply) return;
     try {
       const title = messages.find(m => m.role === "user")?.content.slice(0, 70) ?? "Untitled";
-      const history: any[] = JSON.parse(localStorage.getItem("pc:history") ?? "[]");
+      const history = readJSON<any[]>(STORAGE_KEYS.history, []);
       const key = sessionKeyRef.current;
       const idx = history.findIndex(h => h.id === key);
       const entry = { id: key, title, messages, versions: promptVersions, ts: Date.now() };
       if (idx >= 0) history[idx] = entry; else history.unshift(entry);
-      localStorage.setItem("pc:history", JSON.stringify(history.slice(0, 100)));
+      writeJSON(STORAGE_KEYS.history, history.slice(0, 100));
     } catch {}
   }, [streaming]);
 
-  const addTrial = () => setTrialUsed(u => { const n = u + 1; try { localStorage.setItem("pc:trialUsed", String(n)); } catch {} return n; });
+  const addTrial = () => setTrialUsed(u => { const n = u + 1; writeString(STORAGE_KEYS.trialUsed, String(n)); return n; });
 
   const runAction = useCallback(async (generatedPrompt: string) => {
     setActionResult("");
@@ -127,27 +137,26 @@ export default function Builder() {
   }, [messages, streaming]);
 
   useEffect(() => {
-    const prefill = sessionStorage.getItem("promptcraft:prefillInput");
-    if (params.get("refine") && prefill) {
-      setInput(prefill);
-      sessionStorage.removeItem("promptcraft:prefillInput");
+    if (params.get("refine")) {
+      const prefill = takeSessionItem(SESSION_KEYS.prefillInput);
+      if (prefill) setInput(prefill);
     }
-    const remix = sessionStorage.getItem("promptcraft:remixPrompt");
-    if (params.get("remix") && remix) {
-      setInput(`Remix this prompt: ${remix}`);
-      sessionStorage.removeItem("promptcraft:remixPrompt");
+    if (params.get("remix")) {
+      const remix = takeSessionItem(SESSION_KEYS.remixPrompt);
+      if (remix) setInput(`Remix this prompt: ${remix}`);
     }
     // Resume a history session
-    const resumeRaw = sessionStorage.getItem("pc:resume");
-    if (params.get("resume") && resumeRaw) {
-      try {
-        const entry = JSON.parse(resumeRaw);
-        sessionKeyRef.current = entry.id;
-        localStorage.setItem("pc:sessionKey", entry.id);
-        setMessages(entry.messages ?? []);
-        setPromptVersions(entry.versions ?? null);
-      } catch {}
-      sessionStorage.removeItem("pc:resume");
+    if (params.get("resume")) {
+      const resumeRaw = takeSessionItem(SESSION_KEYS.resume);
+      if (resumeRaw) {
+        try {
+          const entry = JSON.parse(resumeRaw);
+          sessionKeyRef.current = entry.id;
+          writeString(STORAGE_KEYS.sessionKey, entry.id);
+          setMessages(entry.messages ?? []);
+          setPromptVersions(entry.versions ?? null);
+        } catch {}
+      }
     }
   }, []);
 
@@ -213,29 +222,19 @@ export default function Builder() {
       if (isSignedIn) {
         let sid = sessionId;
         if (!sid) {
-          const token = await getToken();
-          const res = await fetch(`${API_BASE}/api/sessions`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            credentials: "include",
-          });
+          const res = await apiFetch("/api/sessions", { method: "POST" });
           sid = (await res.json()).id;
           setSessionId(sid);
         }
-        const token = await getToken();
-        const response = await fetch(`${API_BASE}/api/openai/sessions/${sid}/messages`, {
+        const response = await apiFetch(`/api/openai/sessions/${sid}/messages`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ content, mode: "advanced", domain: domain || undefined, style: tone || undefined }),
-          credentials: "include",
         });
         await handleStream(response, assistantId);
       } else {
-        const response = await fetch(`${API_BASE}/api/trial/refine`, {
+        const response = await apiFetch("/api/trial/refine", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content, mode: "advanced", domain: domain || undefined, style: tone || undefined }),
-          credentials: "include",
         });
         if (response.status === 402) {
           setMessages((prev) => prev.filter((m) => m.id !== assistantId));
@@ -252,29 +251,15 @@ export default function Builder() {
     } finally {
       setStreaming(false);
     }
-  }, [input, streaming, isSignedIn, sessionId, domain, tone, getToken, messages]);
+  }, [input, streaming, isSignedIn, sessionId, domain, tone, messages]);
 
   async function handleStream(response: Response, assistantId: string) {
-    const reader = response.body?.getReader();
-    if (!reader) return;
-    const decoder = new TextDecoder();
     let full = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const lines = decoder.decode(value).split("\n").filter((l) => l.startsWith("data: "));
-      for (const line of lines) {
-        const data = line.slice(6);
-        if (data === "[DONE]") break;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.content) {
-            full += parsed.content;
-            setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: full } : m));
-          }
-        } catch {}
-      }
-    }
+    await readSSEStream(response, (frame: any) => {
+      if (!frame?.content) return;
+      full += frame.content;
+      setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: full } : m));
+    });
     const versions = extractVersions(full);
     if (versions) { setPromptVersions(versions); setActiveVersion(1); }
   }
@@ -289,21 +274,20 @@ export default function Builder() {
     : rawAssistant;
 
   const copyActive = () => {
-    navigator.clipboard.writeText(activeContent);
+    copyToClipboard(activeContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success("Copied!");
   };
 
   const saveToProject = (projectId: string) => {
     try {
-      const history: any[] = JSON.parse(localStorage.getItem("pc:history") ?? "[]");
+      const history = readJSON<any[]>(STORAGE_KEYS.history, []);
       const key = sessionKeyRef.current;
       const idx = history.findIndex(h => h.id === key);
       if (idx >= 0) {
         history[idx].projectId = projectId;
-        localStorage.setItem("pc:history", JSON.stringify(history));
-        const proj: any[] = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
+        writeJSON(STORAGE_KEYS.history, history);
+        const proj = readJSON<any[]>(STORAGE_KEYS.projects, []);
         const name = proj.find(p => p.id === projectId)?.name ?? "project";
         setSavedToProject(projectId);
         toast.success(`Saved to "${name}"`);
@@ -317,10 +301,10 @@ export default function Builder() {
   const savePrompt = () => {
     if (!activeContent) return;
     try {
-      const saved = JSON.parse(localStorage.getItem("pc:saved") ?? "[]");
+      const saved = readJSON<any[]>(STORAGE_KEYS.saved, []);
       const title = messages.find(m => m.role === "user")?.content.slice(0, 70) ?? "Saved prompt";
       saved.unshift({ id: Date.now().toString(), title, content: activeContent, version: activeVersion, ts: Date.now() });
-      localStorage.setItem("pc:saved", JSON.stringify(saved.slice(0, 200)));
+      writeJSON(STORAGE_KEYS.saved, saved.slice(0, 200));
       toast.success("Prompt saved to library");
     } catch {}
   };
@@ -330,8 +314,7 @@ export default function Builder() {
     try {
       const encoded = btoa(unescape(encodeURIComponent(activeContent)));
       const url = `${window.location.origin}${import.meta.env.BASE_URL}share/${encoded}`;
-      navigator.clipboard.writeText(url);
-      toast.success("Share link copied!");
+      copyToClipboard(url, "Share link copied!");
     } catch { toast.error("Failed to copy link"); }
   };
 
@@ -355,7 +338,7 @@ export default function Builder() {
       {showOnboarding && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm" style={{ background: "hsl(248 95% 62% / 0.12)", borderBottom: "1px solid hsl(248 95% 62% / 0.25)" }}>
           <span className="text-muted-foreground">👋 <strong className="text-foreground">Welcome!</strong> Describe what you need in plain English — PromptCraft writes the perfect AI prompt for you.</span>
-          <button onClick={() => { setShowOnboarding(false); localStorage.setItem("pc:visited","1"); }} className="shrink-0 text-xs px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">Got it</button>
+          <button onClick={() => { setShowOnboarding(false); writeString(STORAGE_KEYS.visited, "1"); }} className="shrink-0 text-xs px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">Got it</button>
         </div>
       )}
 
@@ -400,9 +383,8 @@ export default function Builder() {
               onClick={() => {
                 const newKey = Date.now().toString();
                 sessionKeyRef.current = newKey;
-                localStorage.setItem("pc:sessionKey", newKey);
-                localStorage.removeItem("pc:msgs");
-                localStorage.removeItem("pc:vers");
+                writeString(STORAGE_KEYS.sessionKey, newKey);
+                removeStored("pc:msgs", "pc:vers");
                 setMessages([]); setSessionId(null); setPromptVersions(null); setLastUserInput(""); setPlanData(null); setActionResult(""); setActionTab("prompt");
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-all border border-border text-muted-foreground hover:text-foreground"
@@ -602,7 +584,7 @@ export default function Builder() {
               {showProjectPicker && (
                 <div className="absolute left-0 top-full mt-1 z-20 w-48 rounded-xl py-1 bg-card border border-border shadow-xl">
                   {(() => {
-                    const projects: any[] = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
+                    const projects = readJSON<any[]>(STORAGE_KEYS.projects, []);
                     return projects.length === 0 ? (
                       <div className="px-3 py-3 text-xs text-muted-foreground text-center">
                         No projects yet.<br />

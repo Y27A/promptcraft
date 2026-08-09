@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Bookmark, Trash2, Copy, Search, ExternalLink, LayoutTemplate } from "lucide-react";
+import { Bookmark, Trash2, Copy, ExternalLink, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
+import { STORAGE_KEYS, readJSON, writeJSON } from "@/lib/storage";
+import { copyToClipboard } from "@/lib/clipboard";
+import { openBuilderWith } from "@/lib/builder-nav";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchInput } from "@/components/ui/search-input";
 
 type SavedPrompt = { id: string; title: string; content: string; version: 1|2; ts: number };
+type UserTemplate = { id: string; title: string; content: string; category: string; ts: number };
 
 function load(): SavedPrompt[] {
-  try { return JSON.parse(localStorage.getItem("pc:saved") ?? "[]"); } catch { return []; }
+  return readJSON<SavedPrompt[]>(STORAGE_KEYS.saved, []);
 }
 
 export default function Saved() {
@@ -23,29 +29,19 @@ export default function Saved() {
   const del = (id: string) => {
     const updated = items.filter(i => i.id !== id);
     setItems(updated);
-    localStorage.setItem("pc:saved", JSON.stringify(updated));
+    writeJSON(STORAGE_KEYS.saved, updated);
     toast.success("Deleted");
   };
 
-  const copy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success("Copied!");
-  };
-
   const saveAsTemplate = (item: SavedPrompt) => {
-    try {
-      const templates = JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]");
-      if (templates.some((t: any) => t.title === item.title)) { toast.error("Already saved as template"); return; }
-      templates.unshift({ id: Date.now().toString(), title: item.title, content: item.content, category: "general", ts: Date.now() });
-      localStorage.setItem("pc:user-templates", JSON.stringify(templates.slice(0, 50)));
-      toast.success("Saved as template → visible in Templates page");
-    } catch {}
+    const templates = readJSON<UserTemplate[]>(STORAGE_KEYS.userTemplates, []);
+    if (templates.some((t) => t.title === item.title)) { toast.error("Already saved as template"); return; }
+    templates.unshift({ id: Date.now().toString(), title: item.title, content: item.content, category: "general", ts: Date.now() });
+    writeJSON(STORAGE_KEYS.userTemplates, templates.slice(0, 50));
+    toast.success("Saved as template → visible in Templates page");
   };
 
-  const refine = (content: string) => {
-    sessionStorage.setItem("promptcraft:prefillInput", content);
-    navigate("/builder?refine=1");
-  };
+  const refine = (content: string) => openBuilderWith(navigate, content);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -54,19 +50,14 @@ export default function Saved() {
         <p className="text-muted-foreground">Your personal prompt library.</p>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search saved prompts…"
-          className="w-full rounded-xl border border-border bg-muted pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-      </div>
+      <SearchInput value={search} onChange={setSearch} placeholder="Search saved prompts…" className="mb-6" />
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Bookmark className="h-16 w-16 text-muted-foreground mb-4 opacity-30" />
-          <h3 className="font-semibold text-lg mb-1">{items.length === 0 ? "No saved prompts yet" : "No results"}</h3>
-          <p className="text-sm text-muted-foreground">Use the 🔖 button in the Builder output pane to save prompts here.</p>
-        </div>
+        <EmptyState
+          icon={Bookmark}
+          title={items.length === 0 ? "No saved prompts yet" : "No results"}
+          description="Use the 🔖 button in the Builder output pane to save prompts here."
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map(item => (
@@ -80,7 +71,7 @@ export default function Saved() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => copy(item.content)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Copy">
+                  <button onClick={() => copyToClipboard(item.content)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Copy">
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => saveAsTemplate(item)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="Save as template">

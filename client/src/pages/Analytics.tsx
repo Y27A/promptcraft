@@ -2,15 +2,14 @@ import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, MessageSquare, Bookmark, FolderOpen, Zap } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-
-function load(key: string) { try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; } }
+import { STORAGE_KEYS, readJSON } from "@/lib/storage";
 
 export default function Analytics() {
   usePageTitle("Analytics");
 
-  const history = useMemo(() => load("pc:history"), []);
-  const saved = useMemo(() => load("pc:saved"), []);
-  const projects = useMemo(() => load("pc:projects"), []);
+  const history = useMemo(() => readJSON<any[]>(STORAGE_KEYS.history, []), []);
+  const saved = useMemo(() => readJSON<any[]>(STORAGE_KEYS.saved, []), []);
+  const projects = useMemo(() => readJSON<any[]>(STORAGE_KEYS.projects, []), []);
 
   const totalMsgs = useMemo(() => history.reduce((s: number, h: any) => s + (h.messages?.filter((m: any) => m.role === "user").length ?? 0), 0), [history]);
 

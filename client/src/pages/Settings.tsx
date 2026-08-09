@@ -3,12 +3,15 @@ import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeUser } from "@/lib/clerk-safe";
+import { STORAGE_KEYS, readJSON, writeJSON, removeStored } from "@/lib/storage";
 
 const DOMAINS = ["","Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"];
 const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"];
 
-function loadSettings() {
-  try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}"); } catch { return {}; }
+type BuilderDefaults = { defaultDomain?: string; defaultTone?: string };
+
+function loadSettings(): BuilderDefaults {
+  return readJSON<BuilderDefaults>(STORAGE_KEYS.settings, {});
 }
 
 export default function SettingsPage() {
@@ -19,12 +22,12 @@ export default function SettingsPage() {
   const [tone, setTone] = useState(saved.defaultTone ?? "");
 
   const save = () => {
-    localStorage.setItem("pc:settings", JSON.stringify({ defaultDomain: domain, defaultTone: tone }));
+    writeJSON(STORAGE_KEYS.settings, { defaultDomain: domain, defaultTone: tone });
     toast.success("Settings saved");
   };
 
   const clearData = (key: string, label: string) => {
-    localStorage.removeItem(key);
+    removeStored(key);
     toast.success(`${label} cleared`);
   };
 
@@ -98,9 +101,9 @@ export default function SettingsPage() {
           <h2 className="font-semibold text-lg mb-4">Data Management</h2>
           <div className="space-y-3">
             {[
-              { key: "pc:history", label: "Chat History" },
-              { key: "pc:saved", label: "Saved Prompts" },
-              { key: "pc:projects", label: "Projects" },
+              { key: STORAGE_KEYS.history, label: "Chat History" },
+              { key: STORAGE_KEYS.saved, label: "Saved Prompts" },
+              { key: STORAGE_KEYS.projects, label: "Projects" },
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between">
                 <span className="text-sm">{label}</span>

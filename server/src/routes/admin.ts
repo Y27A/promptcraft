@@ -6,14 +6,14 @@ import { userSettings } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { getOrCreateSettings } from "../lib/usage";
 import type { Request } from "express";
+import { getUserId } from "../types/auth";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
 
 router.use(requireAuth);
 
 async function requireAdmin(req: Request, res: any, next: any) {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const s = await getOrCreateSettings(userId);
   if (!s.isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
   next();

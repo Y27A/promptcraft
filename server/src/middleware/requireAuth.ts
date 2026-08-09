@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
+import type { AuthReq } from "../types/auth";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const { userId } = getAuth(req);
@@ -7,6 +8,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  (req as Request & { userId: string }).userId = userId;
+  (req as AuthReq).userId = userId;
   next();
 }

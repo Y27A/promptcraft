@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import chroma from "chroma-js";
+import { STORAGE_KEYS, readString, writeString } from "@/lib/storage";
 
 type ThemePref = "system" | "light" | "dark";
 type Resolved = "light" | "dark";
@@ -34,10 +35,10 @@ function applyAccent(hex: string) {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themePref, setThemePrefState] = useState<ThemePref>(
-    () => (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "dark"
+    () => (readString(STORAGE_KEYS.themePref) as ThemePref) ?? "dark"
   );
   const [accentHex, setAccentState] = useState<string>(
-    () => localStorage.getItem("promptcraft:accent") ?? "#7c3aed"
+    () => readString(STORAGE_KEYS.accent) ?? "#7c3aed"
   );
 
   const getResolved = (pref: ThemePref): Resolved =>
@@ -65,12 +66,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { applyAccent(accentHex); }, [accentHex]);
 
   const setThemePref = (p: ThemePref) => {
-    localStorage.setItem("promptcraft:themePref", p);
+    writeString(STORAGE_KEYS.themePref, p);
     setThemePrefState(p);
   };
 
   const setAccent = (hex: string) => {
-    localStorage.setItem("promptcraft:accent", hex);
+    writeString(STORAGE_KEYS.accent, hex);
     setAccentState(hex);
   };
 
