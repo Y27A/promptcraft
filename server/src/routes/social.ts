@@ -13,6 +13,7 @@ import { requireAuth } from "../middleware/requireAuth";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import type { Request } from "express";
+import { parseIdParam } from "../lib/params";
 
 const router = Router();
 type AuthReq = Request & { userId: string };
@@ -85,7 +86,7 @@ router.get("/social/mine", async (req, res) => {
 router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) => {
   const { userId } = req as AuthReq;
   const { rating } = z.object({ rating: z.enum(["up", "down"]) }).parse(req.body);
-  const messageId = parseInt(req.params.messageId);
+  const messageId = parseIdParam(req.params.messageId, "message id");
   await db
     .insert(messageRatings)
     .values({ messageId, userId, rating })
@@ -95,7 +96,7 @@ router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) =>
 
 router.get("/sessions/:id/favorite", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   const fav = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
   });
@@ -104,7 +105,7 @@ router.get("/sessions/:id/favorite", async (req, res) => {
 
 router.post("/sessions/:id/favorite", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   const existing = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
   });
@@ -119,7 +120,7 @@ router.post("/sessions/:id/favorite", async (req, res) => {
 
 router.get("/sessions/:id/tags", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   const tags = await db.query.sessionTags.findMany({
     where: and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId)),
   });
@@ -128,7 +129,7 @@ router.get("/sessions/:id/tags", async (req, res) => {
 
 router.post("/sessions/:id/tags", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   const { tag } = z.object({ tag: z.string().min(1) }).parse(req.body);
   const existing = await db.query.sessionTags.findMany({
     where: and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId)),
@@ -141,7 +142,7 @@ router.post("/sessions/:id/tags", async (req, res) => {
 
 router.delete("/sessions/:id/tags/:tag", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   await db.delete(sessionTags).where(
     and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId), eq(sessionTags.tag, req.params.tag))
   );
@@ -150,15 +151,20 @@ router.delete("/sessions/:id/tags/:tag", async (req, res) => {
 
 router.post("/sessions/:id/publish", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   const publicSlug = nanoid(10);
-  await db.update(sessions).set({ publicSlug, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
+  const [updated] = await db
+    .update(sessions)
+    .set({ publicSlug, updatedAt: new Date() })
+    .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+    .returning();
+  if (!updated) { res.status(404).json({ error: "Session not found" }); return; }
   res.json({ publicSlug });
 });
 
 router.delete("/sessions/:id/publish", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
   await db.update(sessions).set({ publicSlug: null, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
   res.status(204).send();
 });

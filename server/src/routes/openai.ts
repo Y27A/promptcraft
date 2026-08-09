@@ -7,6 +7,9 @@ import { reserveUserGenSlot, decrementUserGenCount } from "../lib/usage";
 import OpenAI from "openai";
 import { z } from "zod";
 import type { Request } from "express";
+import { logger } from "../lib/logger";
+import { parseIdParam } from "../lib/params";
+import { failStream } from "../lib/stream";
 
 const router = Router();
 type AuthReq = Request & { userId: string };
@@ -58,7 +61,7 @@ const bodySchema = z.object({
 
 router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseIdParam(req.params.id, "session id");
 
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, sessionId), eq(sessions.userId, userId)),
@@ -72,11 +75,11 @@ router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
   if (!reserved) { res.status(429).json({ error: "quota_exhausted" }); return; }
 
   // Save user message
-  const [userMsg] = await db.insert(sessionMessages).values({
+  await db.insert(sessionMessages).values({
     sessionId,
     role: "user",
     content: body.data.content,
-  }).returning();
+  });
 
   // Auto-title from first message
   if (!session.title) {
@@ -133,9 +136,20 @@ router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err) {
-    await decrementUserGenCount(userId);
-    res.write(`data: ${JSON.stringify({ error: "Generation failed" })}\n\n`);
-    res.end();
+    logger.error({ err, userId, sessionId }, "Generation stream failed");
+    try {
+      await decrementUserGenCount(userId);
+    } catch (refundErr) {
+      logger.error({ err: refundErr, userId }, "Failed to refund generation quota");
+    }
+    if (fullContent) {
+      try {
+        await db.insert(sessionMessages).values({ sessionId, role: "assistant", content: fullContent });
+      } catch (saveErr) {
+        logger.error({ err: saveErr, sessionId }, "Failed to persist partial assistant message");
+      }
+    }
+    failStream(res, "Generation failed");
   }
 });
 

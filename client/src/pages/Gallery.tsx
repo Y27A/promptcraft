@@ -32,7 +32,15 @@ export default function Gallery() {
     (!search || g.title.toLowerCase().includes(search.toLowerCase()) || g.prompt.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const copy = (text: string) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied!");
+    } catch (err) {
+      console.error("Clipboard write failed", err);
+      toast.error("Couldn't copy — clipboard access was denied");
+    }
+  };
   const remix = (prompt: string) => {
     sessionStorage.setItem("promptcraft:prefillInput", `Remix and improve this prompt: ${prompt}`);
     navigate("/builder?refine=1");

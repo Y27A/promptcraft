@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { logger } from "./lib/logger";
+import { errorHandler, notFoundHandler, HttpError } from "./middleware/errorHandler";
 
 import promptsRouter from "./routes/prompts";
 import templatesRouter, { userTemplatesRouter } from "./routes/templates";
@@ -24,7 +25,7 @@ app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-      cb(new Error("Not allowed by CORS"));
+      cb(new HttpError(403, "Origin not allowed by CORS"));
     },
     credentials: true,
   })
@@ -49,5 +50,8 @@ app.use("/api/trial", trialRouter);
 app.use("/api/me", settingsRouter);
 app.use("/api", socialRouter);
 app.use("/api/admin", adminRouter);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

@@ -3,6 +3,8 @@ import { z } from "zod";
 import OpenAI from "openai";
 import { ANON_TRIAL_LIMIT, readTrialCount, writeTrialCount } from "../lib/usage";
 import { SYSTEM_PROMPT } from "./openai";
+import { logger } from "../lib/logger";
+import { failStream } from "../lib/stream";
 
 const router = Router();
 const openai = new OpenAI({
@@ -40,12 +42,6 @@ router.post("/refine", async (req, res) => {
     sysPrompt += `\n\nThe user wants this prompt for ${parts.join(", ")}.`;
   }
 
-  writeTrialCount(res, used + 1);
-
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
   try {
     const stream = await openai.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -56,15 +52,22 @@ router.post("/refine", async (req, res) => {
       ],
     });
 
+    // Only charge the trial slot once the upstream call is accepted, so a
+    // failed generation does not burn one of the anonymous trials.
+    writeTrialCount(res, used + 1);
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content ?? "";
       if (delta) res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
     }
     res.write("data: [DONE]\n\n");
     res.end();
-  } catch {
-    res.write(`data: ${JSON.stringify({ error: "Generation failed" })}\n\n`);
-    res.end();
+  } catch (err) {
+    logger.error({ err }, "Trial generation stream failed");
+    failStream(res, "Generation failed");
   }
 });
 

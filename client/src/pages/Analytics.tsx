@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, MessageSquare, Bookmark, FolderOpen, Zap } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { readJSON } from "@/lib/storage";
 
-function load(key: string) { try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; } }
+function load(key: string) { return readJSON<any[]>(key, []); }
 
 export default function Analytics() {
   usePageTitle("Analytics");

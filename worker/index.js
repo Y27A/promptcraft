@@ -18,11 +18,18 @@ export default {
       return new Response("Method Not Allowed", { status: 405 });
     }
 
+    if (!env.GROQ_API_KEY) {
+      console.error("GROQ_API_KEY is not configured on the worker");
+      return jsonError("Proxy is not configured", 500, origin);
+    }
+
     // IP rate limiting via KV
     if (env.RATE_LIMITS) {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const key = `${ip}:${new Date().toDateString()}`;
-      const count = parseInt((await env.RATE_LIMITS.get(key)) || "0");
+      const raw = await env.RATE_LIMITS.get(key);
+      const parsed = parseInt(raw || "0", 10);
+      const count = Number.isNaN(parsed) ? 0 : parsed;
       if (count >= DAILY_LIMIT) {
         return corsResponse(
           new Response(JSON.stringify({ error: { message: "Daily limit reached. Try again tomorrow." } }), {
@@ -32,19 +39,29 @@ export default {
           origin
         );
       }
-      await env.RATE_LIMITS.put(key, String(count + 1), { expirationTtl: 86400 });
+      try {
+        await env.RATE_LIMITS.put(key, String(count + 1), { expirationTtl: 86400 });
+      } catch (err) {
+        console.error("Failed to record rate-limit usage", err);
+      }
     }
 
     // Proxy to Groq
-    const body = await request.text();
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.GROQ_API_KEY}`,
-      },
-      body,
-    });
+    let groqRes;
+    try {
+      const body = await request.text();
+      groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.GROQ_API_KEY}`,
+        },
+        body,
+      });
+    } catch (err) {
+      console.error("Upstream Groq request failed", err);
+      return jsonError("Upstream provider is unreachable", 502, origin);
+    }
 
     return corsResponse(
       new Response(groqRes.body, {
@@ -55,6 +72,16 @@ export default {
     );
   },
 };
+
+function jsonError(message, status, origin) {
+  return corsResponse(
+    new Response(JSON.stringify({ error: { message } }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+    origin
+  );
+}
 
 function corsResponse(response, origin) {
   const r = new Response(response.body, response);

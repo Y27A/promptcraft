@@ -5,11 +5,12 @@ import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
+import { readJSON, writeJSON } from "@/lib/storage";
 
 type SavedPrompt = { id: string; title: string; content: string; version: 1|2; ts: number };
 
 function load(): SavedPrompt[] {
-  try { return JSON.parse(localStorage.getItem("pc:saved") ?? "[]"); } catch { return []; }
+  return readJSON<SavedPrompt[]>("pc:saved", []);
 }
 
 export default function Saved() {
@@ -22,24 +23,33 @@ export default function Saved() {
 
   const del = (id: string) => {
     const updated = items.filter(i => i.id !== id);
+    if (!writeJSON("pc:saved", updated)) {
+      toast.error("Couldn't delete — browser storage is unavailable");
+      return;
+    }
     setItems(updated);
-    localStorage.setItem("pc:saved", JSON.stringify(updated));
     toast.success("Deleted");
   };
 
-  const copy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success("Copied!");
+  const copy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Copied!");
+    } catch (err) {
+      console.error("Clipboard write failed", err);
+      toast.error("Couldn't copy — clipboard access was denied");
+    }
   };
 
   const saveAsTemplate = (item: SavedPrompt) => {
-    try {
-      const templates = JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]");
-      if (templates.some((t: any) => t.title === item.title)) { toast.error("Already saved as template"); return; }
-      templates.unshift({ id: Date.now().toString(), title: item.title, content: item.content, category: "general", ts: Date.now() });
-      localStorage.setItem("pc:user-templates", JSON.stringify(templates.slice(0, 50)));
-      toast.success("Saved as template → visible in Templates page");
-    } catch {}
+    const templates = readJSON<any[]>("pc:user-templates", []);
+    if (templates.some((t: any) => t.title === item.title)) { toast.error("Already saved as template"); return; }
+    templates.unshift({ id: Date.now().toString(), title: item.title, content: item.content, category: "general", ts: Date.now() });
+    if (!writeJSON("pc:user-templates", templates.slice(0, 50))) {
+      toast.error("Couldn't save as template — browser storage is full or unavailable");
+      return;
+    }
+    toast.success("Saved as template → visible in Templates page");
   };
 
   const refine = (content: string) => {

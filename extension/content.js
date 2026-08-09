@@ -40,15 +40,26 @@ function inject() {
   btn.addEventListener("mouseleave", () => btn.style.transform = "scale(1)");
 
   btn.addEventListener("click", async () => {
-    const data = await chrome.storage.local.get("lastPrompt");
-    const prompt = data.lastPrompt;
+    let prompt;
+    try {
+      ({ lastPrompt: prompt } = await chrome.storage.local.get("lastPrompt"));
+    } catch (err) {
+      console.error("PromptCraft: failed to read the stored prompt", err);
+      btn.innerHTML = "Couldn't read prompt";
+      setTimeout(() => btn.innerHTML = "⚡ PC", 2000);
+      return;
+    }
     if (!prompt) {
       btn.innerHTML = "Open PromptCraft first!";
       setTimeout(() => btn.innerHTML = "⚡ PC", 2000);
       return;
     }
     const el = findInput();
-    if (!el) return;
+    if (!el) {
+      btn.innerHTML = "No input field found";
+      setTimeout(() => btn.innerHTML = "⚡ PC", 2000);
+      return;
+    }
     if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
       el.value = prompt;
       el.dispatchEvent(new Event("input", { bubbles: true }));

@@ -5,6 +5,7 @@ import { templates, userTemplates } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { z } from "zod";
 import type { Request } from "express";
+import { parseIdParam } from "../lib/params";
 
 // Public curated templates
 const router = Router();
@@ -14,7 +15,7 @@ router.get("/", async (_req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const t = await db.query.templates.findFirst({ where: eq(templates.id, parseInt(req.params.id)) });
+  const t = await db.query.templates.findFirst({ where: eq(templates.id, parseIdParam(req.params.id)) });
   if (!t) { res.status(404).json({ error: "Not found" }); return; }
   res.json(t);
 });
@@ -50,7 +51,7 @@ userRouter.post("/", async (req, res) => {
 
 userRouter.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const t = await db.query.userTemplates.findFirst({
     where: and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)),
   });
@@ -60,7 +61,7 @@ userRouter.get("/:id", async (req, res) => {
 
 userRouter.put("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const body = templateSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
   const [updated] = await db
@@ -74,7 +75,7 @@ userRouter.put("/:id", async (req, res) => {
 
 userRouter.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   await db.delete(userTemplates).where(and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)));
   res.status(204).send();
 });

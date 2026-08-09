@@ -2,6 +2,7 @@ import { db } from "../db/client";
 import { userSettings } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { Request, Response } from "express";
+import { HttpError } from "../middleware/errorHandler";
 
 export const ANON_TRIAL_LIMIT = 10;
 export const FREE_DAILY_LIMIT = 25;
@@ -20,6 +21,7 @@ export async function getOrCreateSettings(userId: string) {
     .insert(userSettings)
     .values({ userId })
     .returning();
+  if (!created) throw new HttpError(500, "Failed to create user settings");
   return created;
 }
 
@@ -41,6 +43,7 @@ export async function getDailyUsageRow(userId: string) {
       .set({ dailyGenCount: 0, dailyGenPeriod: today, updatedAt: new Date() })
       .where(eq(userSettings.userId, userId))
       .returning();
+    if (!updated) throw new HttpError(500, "Failed to reset daily usage");
     return updated;
   }
   return settings;
@@ -70,6 +73,7 @@ export async function reserveUserGenSlot(userId: string): Promise<boolean> {
     .returning();
 
   const updated = result[0];
+  if (!updated) throw new HttpError(500, "Failed to reserve generation slot");
   const prevCount = settings.dailyGenCount;
   return updated.dailyGenCount > prevCount;
 }

@@ -59,11 +59,13 @@ router.put("/settings", async (req, res) => {
   const { userId } = req as AuthReq;
   const body = updateSchema.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
+  await getOrCreateSettings(userId);
   const [updated] = await db
     .update(userSettings)
     .set({ ...body.data, updatedAt: new Date() })
     .where(eq(userSettings.userId, userId))
     .returning();
+  if (!updated) { res.status(500).json({ error: "Failed to update settings" }); return; }
   res.json(updated);
 });
 

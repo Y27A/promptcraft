@@ -3,12 +3,13 @@ import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeUser } from "@/lib/clerk-safe";
+import { readJSON, writeJSON, remove } from "@/lib/storage";
 
 const DOMAINS = ["","Marketing","Coding","Writing","Research","Education","Business","Creative","Legal","Finance","Social"];
 const TONES = ["","Professional","Casual","Formal","Friendly","Technical","Creative","Persuasive","Empathetic"];
 
 function loadSettings() {
-  try { return JSON.parse(localStorage.getItem("pc:settings") ?? "{}"); } catch { return {}; }
+  return readJSON<{ defaultDomain?: string; defaultTone?: string }>("pc:settings", {});
 }
 
 export default function SettingsPage() {
@@ -19,12 +20,15 @@ export default function SettingsPage() {
   const [tone, setTone] = useState(saved.defaultTone ?? "");
 
   const save = () => {
-    localStorage.setItem("pc:settings", JSON.stringify({ defaultDomain: domain, defaultTone: tone }));
+    if (!writeJSON("pc:settings", { defaultDomain: domain, defaultTone: tone })) {
+      toast.error("Couldn't save settings — browser storage is full or unavailable");
+      return;
+    }
     toast.success("Settings saved");
   };
 
   const clearData = (key: string, label: string) => {
-    localStorage.removeItem(key);
+    remove(key);
     toast.success(`${label} cleared`);
   };
 

@@ -6,6 +6,7 @@ import { prompts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import type { Request } from "express";
 import { nanoid } from "nanoid";
+import { parseIdParam } from "../lib/params";
 
 const router = Router();
 type AuthReq = Request & { userId: string };
@@ -69,7 +70,7 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const p = await db.query.prompts.findFirst({ where: and(eq(prompts.id, id), eq(prompts.userId, userId)) });
   if (!p) { res.status(404).json({ error: "Not found" }); return; }
   res.json(p);
@@ -77,7 +78,7 @@ router.get("/:id", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const body = createSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
 
@@ -96,14 +97,14 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   await db.delete(prompts).where(and(eq(prompts.id, id), eq(prompts.userId, userId)));
   res.status(204).send();
 });
 
 router.post("/:id/share", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const shareToken = nanoid(16);
   const [updated] = await db
     .update(prompts)
@@ -116,7 +117,7 @@ router.post("/:id/share", async (req, res) => {
 
 router.delete("/:id/share", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   await db
     .update(prompts)
     .set({ shareToken: null, updatedAt: new Date() })
