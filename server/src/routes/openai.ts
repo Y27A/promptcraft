@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/client";
+import { parseId } from "../lib/params";
 import { sessions, sessionMessages } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { reserveUserGenSlot, decrementUserGenCount } from "../lib/usage";
@@ -58,7 +59,8 @@ const bodySchema = z.object({
 
 router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, sessionId), eq(sessions.userId, userId)),

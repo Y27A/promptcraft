@@ -1,7 +1,9 @@
-const _k = import.meta.env.VITE_GK as string | undefined;
-const GROQ_KEY = _k ? "gsk_" + _k : undefined;
+// Generation goes through the server-side proxy (worker/) which holds the API
+// key. The browser never sees provider credentials.
+const PROXY_URL = import.meta.env.VITE_PROXY_URL as string | undefined;
 const MODEL = "llama-3.3-70b-versatile";
-const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+export const PROXY_ENABLED = !!PROXY_URL;
 
 export type Mode = "quick" | "standard" | "advanced" | "developer" | "marketing" | "plan" | "action";
 
@@ -196,14 +198,11 @@ export async function streamGroq(
   onDelta: (delta: string) => void,
   onDone: () => void,
 ) {
-  if (!GROQ_KEY) throw new Error("No API key configured");
+  if (!PROXY_URL) throw new Error("No generation endpoint configured");
 
-  const res = await fetch(API_URL, {
+  const res = await fetch(PROXY_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(GROQ_KEY ? { Authorization: `Bearer ${GROQ_KEY}` } : {}),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model: MODEL, stream: true, messages, temperature: 0.7, max_tokens: 4096 }),
   });
 

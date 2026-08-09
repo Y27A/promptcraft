@@ -5,14 +5,14 @@ import { db } from "../db/client";
 import { userSettings } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { getOrCreateSettings } from "../lib/usage";
-import type { Request } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 const router = Router();
 type AuthReq = Request & { userId: string };
 
 router.use(requireAuth);
 
-async function requireAdmin(req: Request, res: any, next: any) {
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const { userId } = req as AuthReq;
   const s = await getOrCreateSettings(userId);
   if (!s.isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -27,7 +27,9 @@ router.get("/users", async (_req, res) => {
 });
 
 router.patch("/users/:userId/tier", async (req, res) => {
-  const { tier } = z.object({ tier: z.enum(["free", "pro", "unlimited"]) }).parse(req.body);
+  const body = z.object({ tier: z.enum(["free", "pro", "unlimited"]) }).safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
+  const { tier } = body.data;
   const [updated] = await db
     .update(userSettings)
     .set({ tier, updatedAt: new Date() })

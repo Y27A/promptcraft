@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/client";
+import { parseId } from "../lib/params";
 import {
   sessions,
   sessionMessages,
@@ -84,8 +85,21 @@ router.get("/social/mine", async (req, res) => {
 
 router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) => {
   const { userId } = req as AuthReq;
-  const { rating } = z.object({ rating: z.enum(["up", "down"]) }).parse(req.body);
-  const messageId = parseInt(req.params.messageId);
+  const body = z.object({ rating: z.enum(["up", "down"]) }).safeParse(req.body);
+  if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
+  const { rating } = body.data;
+  const messageId = parseId(req.params.messageId);
+  if (messageId === null) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const message = await db.query.sessionMessages.findFirst({
+    where: eq(sessionMessages.id, messageId),
+    with: { session: true },
+  });
+  if (!message || message.session?.userId !== userId) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
   await db
     .insert(messageRatings)
     .values({ messageId, userId, rating })
@@ -95,7 +109,8 @@ router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) =>
 
 router.get("/sessions/:id/favorite", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const fav = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
   });
@@ -104,7 +119,8 @@ router.get("/sessions/:id/favorite", async (req, res) => {
 
 router.post("/sessions/:id/favorite", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const existing = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
   });
@@ -119,7 +135,8 @@ router.post("/sessions/:id/favorite", async (req, res) => {
 
 router.get("/sessions/:id/tags", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const tags = await db.query.sessionTags.findMany({
     where: and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId)),
   });
@@ -128,8 +145,11 @@ router.get("/sessions/:id/tags", async (req, res) => {
 
 router.post("/sessions/:id/tags", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
-  const { tag } = z.object({ tag: z.string().min(1) }).parse(req.body);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
+  const tagBody = z.object({ tag: z.string().min(1).max(40) }).safeParse(req.body);
+  if (!tagBody.success) { res.status(400).json({ error: tagBody.error.flatten() }); return; }
+  const { tag } = tagBody.data;
   const existing = await db.query.sessionTags.findMany({
     where: and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId)),
   });
@@ -141,7 +161,8 @@ router.post("/sessions/:id/tags", async (req, res) => {
 
 router.delete("/sessions/:id/tags/:tag", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(sessionTags).where(
     and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId), eq(sessionTags.tag, req.params.tag))
   );
@@ -150,15 +171,22 @@ router.delete("/sessions/:id/tags/:tag", async (req, res) => {
 
 router.post("/sessions/:id/publish", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const publicSlug = nanoid(10);
-  await db.update(sessions).set({ publicSlug, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
+  const [updated] = await db
+    .update(sessions)
+    .set({ publicSlug, updatedAt: new Date() })
+    .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+    .returning();
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json({ publicSlug });
 });
 
 router.delete("/sessions/:id/publish", async (req, res) => {
   const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const sessionId = parseId(req.params.id);
+  if (sessionId === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.update(sessions).set({ publicSlug: null, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
   res.status(204).send();
 });

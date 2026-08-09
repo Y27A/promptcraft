@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq, and, ilike, sql } from "drizzle-orm";
 import { db } from "../db/client";
+import { parseId } from "../lib/params";
 import { prompts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import type { Request } from "express";
@@ -69,7 +70,8 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const p = await db.query.prompts.findFirst({ where: and(eq(prompts.id, id), eq(prompts.userId, userId)) });
   if (!p) { res.status(404).json({ error: "Not found" }); return; }
   res.json(p);
@@ -77,7 +79,8 @@ router.get("/:id", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const body = createSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
 
@@ -96,14 +99,16 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(prompts).where(and(eq(prompts.id, id), eq(prompts.userId, userId)));
   res.status(204).send();
 });
 
 router.post("/:id/share", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const shareToken = nanoid(16);
   const [updated] = await db
     .update(prompts)
@@ -116,7 +121,8 @@ router.post("/:id/share", async (req, res) => {
 
 router.delete("/:id/share", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db
     .update(prompts)
     .set({ shareToken: null, updatedAt: new Date() })

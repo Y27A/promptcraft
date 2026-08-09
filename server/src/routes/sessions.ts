@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/client";
+import { parseId } from "../lib/params";
 import { sessions, sessionMessages } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import type { Request } from "express";
@@ -27,7 +28,8 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, id), eq(sessions.userId, userId)),
     with: { sessionMessages: { orderBy: (m, { asc }) => [asc(m.createdAt)] } },
@@ -38,7 +40,8 @@ router.get("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(sessions).where(and(eq(sessions.id, id), eq(sessions.userId, userId)));
   res.status(204).send();
 });
