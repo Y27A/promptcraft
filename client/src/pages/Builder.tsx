@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { API_BASE } from "@/lib/utils";
 import { exportPrompt } from "@/lib/export";
-import { streamGroq, buildSystemPrompt, type Mode } from "@/lib/groq";
+import { streamGroq, buildSystemPrompt, PROXY_ENABLED, type Mode } from "@/lib/groq";
 
 function extractPlan(text: string): { plan: string; prompt: string } | null {
   const idx = text.search(/##\s*✦\s*Prompt/i);
@@ -160,7 +160,7 @@ export default function Builder() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const DIRECT = !!import.meta.env.VITE_GK;
+  const DIRECT = PROXY_ENABLED;
 
   const send = useCallback(async () => {
     const content = input.trim();

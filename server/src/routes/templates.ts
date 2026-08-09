@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/client";
+import { parseId } from "../lib/params";
 import { templates, userTemplates } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { z } from "zod";
@@ -14,7 +15,9 @@ router.get("/", async (_req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const t = await db.query.templates.findFirst({ where: eq(templates.id, parseInt(req.params.id)) });
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
+  const t = await db.query.templates.findFirst({ where: eq(templates.id, id) });
   if (!t) { res.status(404).json({ error: "Not found" }); return; }
   res.json(t);
 });
@@ -50,7 +53,8 @@ userRouter.post("/", async (req, res) => {
 
 userRouter.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const t = await db.query.userTemplates.findFirst({
     where: and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)),
   });
@@ -60,7 +64,8 @@ userRouter.get("/:id", async (req, res) => {
 
 userRouter.put("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   const body = templateSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
   const [updated] = await db
@@ -74,7 +79,8 @@ userRouter.put("/:id", async (req, res) => {
 
 userRouter.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (id === null) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(userTemplates).where(and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)));
   res.status(204).send();
 });
