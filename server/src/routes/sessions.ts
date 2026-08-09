@@ -3,15 +3,14 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db/client";
 import { sessions, sessionMessages } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
-import type { Request } from "express";
+import { getUserId } from "../types/auth";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
 
 router.use(requireAuth);
 
 router.get("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const all = await db.query.sessions.findMany({
     where: eq(sessions.userId, userId),
     orderBy: (s, { desc }) => [desc(s.updatedAt)],
@@ -20,13 +19,13 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const [created] = await db.insert(sessions).values({ userId }).returning();
   res.status(201).json(created);
 });
 
 router.get("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, id), eq(sessions.userId, userId)),
@@ -37,7 +36,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   await db.delete(sessions).where(and(eq(sessions.id, id), eq(sessions.userId, userId)));
   res.status(204).send();

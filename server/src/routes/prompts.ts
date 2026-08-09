@@ -4,11 +4,10 @@ import { eq, and, ilike, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { prompts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
-import type { Request } from "express";
+import { getUserId } from "../types/auth";
 import { nanoid } from "nanoid";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
 
 const createSchema = z.object({
   title: z.string().min(1),
@@ -21,7 +20,7 @@ const createSchema = z.object({
 router.use(requireAuth);
 
 router.get("/stats", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const all = await db.query.prompts.findMany({ where: eq(prompts.userId, userId) });
   const byCategory: Record<string, number> = {};
   for (const p of all) byCategory[p.category] = (byCategory[p.category] ?? 0) + 1;
@@ -34,7 +33,7 @@ router.get("/stats", async (req, res) => {
 });
 
 router.get("/tags", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const all = await db.query.prompts.findMany({ where: eq(prompts.userId, userId) });
   const tagCount: Record<string, number> = {};
   for (const p of all) {
@@ -44,7 +43,7 @@ router.get("/tags", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const { category, search, favoritesOnly, tag } = req.query as Record<string, string>;
 
   let results = await db.query.prompts.findMany({ where: eq(prompts.userId, userId) });
@@ -58,7 +57,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const body = createSchema.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
 
@@ -68,7 +67,7 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const p = await db.query.prompts.findFirst({ where: and(eq(prompts.id, id), eq(prompts.userId, userId)) });
   if (!p) { res.status(404).json({ error: "Not found" }); return; }
@@ -76,7 +75,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const body = createSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
@@ -95,14 +94,14 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   await db.delete(prompts).where(and(eq(prompts.id, id), eq(prompts.userId, userId)));
   res.status(204).send();
 });
 
 router.post("/:id/share", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const shareToken = nanoid(16);
   const [updated] = await db
@@ -115,7 +114,7 @@ router.post("/:id/share", async (req, res) => {
 });
 
 router.delete("/:id/share", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   await db
     .update(prompts)

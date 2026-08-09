@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { History as HistoryIcon, Trash2, ExternalLink, Search, MessageSquare } from "lucide-react";
+import { History as HistoryIcon, Trash2, ExternalLink, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
+import { STORAGE_KEYS, readJSON, writeJSON } from "@/lib/storage";
+import { resumeInBuilder } from "@/lib/builder-nav";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchInput } from "@/components/ui/search-input";
 
 type HistoryEntry = {
   id: string;
@@ -14,7 +18,7 @@ type HistoryEntry = {
 };
 
 function loadHistory(): HistoryEntry[] {
-  try { return JSON.parse(localStorage.getItem("pc:history") ?? "[]"); } catch { return []; }
+  return readJSON<HistoryEntry[]>(STORAGE_KEYS.history, []);
 }
 
 export default function History() {
@@ -30,14 +34,11 @@ export default function History() {
   const deleteEntry = (id: string) => {
     const updated = entries.filter(e => e.id !== id);
     setEntries(updated);
-    localStorage.setItem("pc:history", JSON.stringify(updated));
+    writeJSON(STORAGE_KEYS.history, updated);
     toast.success("Session deleted");
   };
 
-  const resume = (entry: HistoryEntry) => {
-    sessionStorage.setItem("pc:resume", JSON.stringify(entry));
-    navigate("/builder?resume=1");
-  };
+  const resume = (entry: HistoryEntry) => resumeInBuilder(navigate, entry);
 
   const msgCount = (e: HistoryEntry) => e.messages.filter(m => m.role === "user").length;
 
@@ -48,29 +49,20 @@ export default function History() {
         <p className="text-muted-foreground">Resume past conversations.</p>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search sessions…"
-          className="w-full rounded-xl border border-border bg-muted pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        />
-      </div>
+      <SearchInput value={search} onChange={setSearch} placeholder="Search sessions…" className="mb-6" />
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <HistoryIcon className="h-16 w-16 text-muted-foreground mb-4 opacity-30" />
-          <h3 className="font-semibold text-lg mb-1">{entries.length === 0 ? "No sessions yet" : "No results"}</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {entries.length === 0 ? "Start a conversation in the builder." : "Try a different search."}
-          </p>
+        <EmptyState
+          icon={HistoryIcon}
+          title={entries.length === 0 ? "No sessions yet" : "No results"}
+          description={entries.length === 0 ? "Start a conversation in the builder." : "Try a different search."}
+        >
           {entries.length === 0 && (
             <button onClick={() => navigate("/builder")} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
               Open builder
             </button>
           )}
-        </div>
+        </EmptyState>
       ) : (
         <div className="space-y-3">
           {filtered.map((entry) => (

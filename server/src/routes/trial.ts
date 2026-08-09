@@ -1,14 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
-import OpenAI from "openai";
 import { ANON_TRIAL_LIMIT, readTrialCount, writeTrialCount } from "../lib/usage";
 import { SYSTEM_PROMPT } from "./openai";
+import { buildSystemPrompt, streamCompletionToSSE } from "../lib/ai";
+import { startSSE, sendSSE, endSSE } from "../lib/sse";
 
 const router = Router();
-const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
 
 router.get("/usage", (req, res) => {
   const used = readTrialCount(req);
@@ -32,38 +29,20 @@ router.post("/refine", async (req, res) => {
   const body = bodySchema.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
 
-  let sysPrompt = SYSTEM_PROMPT;
-  if (body.data.domain || body.data.style) {
-    const parts = [];
-    if (body.data.domain) parts.push(`domain: ${body.data.domain}`);
-    if (body.data.style) parts.push(`tone: ${body.data.style}`);
-    sysPrompt += `\n\nThe user wants this prompt for ${parts.join(", ")}.`;
-  }
+  const sysPrompt = buildSystemPrompt(SYSTEM_PROMPT, { domain: body.data.domain, style: body.data.style });
 
   writeTrialCount(res, used + 1);
 
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
+  startSSE(res);
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      stream: true,
-      messages: [
-        { role: "system", content: sysPrompt },
-        { role: "user", content: body.data.content },
-      ],
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content ?? "";
-      if (delta) res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
-    }
-    res.write("data: [DONE]\n\n");
-    res.end();
+    await streamCompletionToSSE(res, [
+      { role: "system", content: sysPrompt },
+      { role: "user", content: body.data.content },
+    ]);
+    endSSE(res);
   } catch {
-    res.write(`data: ${JSON.stringify({ error: "Generation failed" })}\n\n`);
+    sendSSE(res, { error: "Generation failed" });
     res.end();
   }
 });

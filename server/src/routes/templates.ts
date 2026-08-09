@@ -4,7 +4,7 @@ import { db } from "../db/client";
 import { templates, userTemplates } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { z } from "zod";
-import type { Request } from "express";
+import { getUserId } from "../types/auth";
 
 // Public curated templates
 const router = Router();
@@ -21,7 +21,6 @@ router.get("/:id", async (req, res) => {
 
 // User templates router (auth required)
 const userRouter = Router();
-type AuthReq = Request & { userId: string };
 
 const templateSchema = z.object({
   title: z.string().min(1),
@@ -36,12 +35,12 @@ const templateSchema = z.object({
 userRouter.use(requireAuth);
 
 userRouter.get("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   res.json(await db.query.userTemplates.findMany({ where: eq(userTemplates.userId, userId) }));
 });
 
 userRouter.post("/", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const body = templateSchema.safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
   const [created] = await db.insert(userTemplates).values({ ...body.data, userId }).returning();
@@ -49,7 +48,7 @@ userRouter.post("/", async (req, res) => {
 });
 
 userRouter.get("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const t = await db.query.userTemplates.findFirst({
     where: and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)),
@@ -59,7 +58,7 @@ userRouter.get("/:id", async (req, res) => {
 });
 
 userRouter.put("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   const body = templateSchema.partial().safeParse(req.body);
   if (!body.success) { res.status(400).json({ error: body.error.flatten() }); return; }
@@ -73,7 +72,7 @@ userRouter.put("/:id", async (req, res) => {
 });
 
 userRouter.delete("/:id", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const id = parseInt(req.params.id);
   await db.delete(userTemplates).where(and(eq(userTemplates.id, id), eq(userTemplates.userId, userId)));
   res.status(204).send();

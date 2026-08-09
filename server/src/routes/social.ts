@@ -12,10 +12,9 @@ import {
 import { requireAuth } from "../middleware/requireAuth";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import type { Request } from "express";
+import { getUserId } from "../types/auth";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
 
 // Public: shared prompt
 router.get("/shared/:token", async (req, res) => {
@@ -71,7 +70,7 @@ router.get("/p/:slug", async (req, res) => {
 router.use(requireAuth);
 
 router.get("/social/mine", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const favs = await db.query.sessionFavorites.findMany({ where: eq(sessionFavorites.userId, userId) });
   const tags = await db.query.sessionTags.findMany({ where: eq(sessionTags.userId, userId) });
   const tagsBySession: Record<number, string[]> = {};
@@ -83,7 +82,7 @@ router.get("/social/mine", async (req, res) => {
 });
 
 router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const { rating } = z.object({ rating: z.enum(["up", "down"]) }).parse(req.body);
   const messageId = parseInt(req.params.messageId);
   await db
@@ -94,7 +93,7 @@ router.post("/sessions/:sessionId/messages/:messageId/rate", async (req, res) =>
 });
 
 router.get("/sessions/:id/favorite", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   const fav = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
@@ -103,7 +102,7 @@ router.get("/sessions/:id/favorite", async (req, res) => {
 });
 
 router.post("/sessions/:id/favorite", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   const existing = await db.query.sessionFavorites.findFirst({
     where: and(eq(sessionFavorites.sessionId, sessionId), eq(sessionFavorites.userId, userId)),
@@ -118,7 +117,7 @@ router.post("/sessions/:id/favorite", async (req, res) => {
 });
 
 router.get("/sessions/:id/tags", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   const tags = await db.query.sessionTags.findMany({
     where: and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId)),
@@ -127,7 +126,7 @@ router.get("/sessions/:id/tags", async (req, res) => {
 });
 
 router.post("/sessions/:id/tags", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   const { tag } = z.object({ tag: z.string().min(1) }).parse(req.body);
   const existing = await db.query.sessionTags.findMany({
@@ -140,7 +139,7 @@ router.post("/sessions/:id/tags", async (req, res) => {
 });
 
 router.delete("/sessions/:id/tags/:tag", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   await db.delete(sessionTags).where(
     and(eq(sessionTags.sessionId, sessionId), eq(sessionTags.userId, userId), eq(sessionTags.tag, req.params.tag))
@@ -149,7 +148,7 @@ router.delete("/sessions/:id/tags/:tag", async (req, res) => {
 });
 
 router.post("/sessions/:id/publish", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   const publicSlug = nanoid(10);
   await db.update(sessions).set({ publicSlug, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
@@ -157,7 +156,7 @@ router.post("/sessions/:id/publish", async (req, res) => {
 });
 
 router.delete("/sessions/:id/publish", async (req, res) => {
-  const { userId } = req as AuthReq;
+  const userId = getUserId(req);
   const sessionId = parseInt(req.params.id);
   await db.update(sessions).set({ publicSlug: null, updatedAt: new Date() }).where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)));
   res.status(204).send();

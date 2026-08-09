@@ -4,17 +4,12 @@ import { db } from "../db/client";
 import { sessions, sessionMessages } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { reserveUserGenSlot, decrementUserGenCount } from "../lib/usage";
-import OpenAI from "openai";
 import { z } from "zod";
-import type { Request } from "express";
+import { buildSystemPrompt, streamCompletionToSSE } from "../lib/ai";
+import { startSSE, sendSSE, endSSE } from "../lib/sse";
+import { getUserId } from "../types/auth";
 
 const router = Router();
-type AuthReq = Request & { userId: string };
-
-const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
 
 export const SYSTEM_PROMPT = `You are PromptCraft AI — an expert prompt engineer who helps users create powerful, effective prompts for AI tools.
 
@@ -57,8 +52,8 @@ const bodySchema = z.object({
 });
 
 router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
-  const { userId } = req as AuthReq;
-  const sessionId = parseInt(req.params.id);
+  const userId = getUserId(req);
+  const sessionId = parseInt(String(req.params.id));
 
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, sessionId), eq(sessions.userId, userId)),
@@ -86,55 +81,27 @@ router.post("/sessions/:id/messages", requireAuth, async (req, res) => {
     }).where(eq(sessions.id, sessionId));
   }
 
-  // Build system prompt with addons
-  let sysPrompt = SYSTEM_PROMPT;
-  if (body.data.mode === "advanced") {
-    sysPrompt += "\n\nAdvanced mode: reference prompt engineering principles (chain-of-thought, few-shot, role prompting) and explain your design choices briefly.";
-  } else if (body.data.mode === "beginner") {
-    sysPrompt += "\n\nBeginner mode: use plain language and explain any technical terms you use.";
-  }
-  if (body.data.domain || body.data.style) {
-    const parts = [];
-    if (body.data.domain) parts.push(`domain: ${body.data.domain}`);
-    if (body.data.style) parts.push(`tone: ${body.data.style}`);
-    sysPrompt += `\n\nThe user wants this prompt for ${parts.join(", ")}.`;
-  }
+  const sysPrompt = buildSystemPrompt(SYSTEM_PROMPT, body.data);
 
   const history = await db.query.sessionMessages.findMany({
     where: eq(sessionMessages.sessionId, sessionId),
     orderBy: (m, { asc }) => [asc(m.createdAt)],
   });
 
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
+  startSSE(res);
 
-  let fullContent = "";
   try {
-    const stream = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      stream: true,
-      messages: [
-        { role: "system", content: sysPrompt },
-        ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
-      ],
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content ?? "";
-      if (delta) {
-        fullContent += delta;
-        res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
-      }
-    }
+    const fullContent = await streamCompletionToSSE(res, [
+      { role: "system", content: sysPrompt },
+      ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    ]);
 
     await db.insert(sessionMessages).values({ sessionId, role: "assistant", content: fullContent });
     await db.update(sessions).set({ updatedAt: new Date() }).where(eq(sessions.id, sessionId));
-    res.write("data: [DONE]\n\n");
-    res.end();
+    endSSE(res);
   } catch (err) {
     await decrementUserGenCount(userId);
-    res.write(`data: ${JSON.stringify({ error: "Generation failed" })}\n\n`);
+    sendSSE(res, { error: "Generation failed" });
     res.end();
   }
 });

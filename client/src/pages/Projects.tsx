@@ -4,6 +4,9 @@ import { FolderOpen, Plus, Trash2, ExternalLink, MessageSquare, X } from "lucide
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
+import { STORAGE_KEYS, readJSON, writeJSON } from "@/lib/storage";
+import { resumeInBuilder } from "@/lib/builder-nav";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Project = { id: string; name: string; color: string; ts: number };
 type HistoryEntry = { id: string; title: string; messages: any[]; versions: any; ts: number; projectId?: string };
@@ -11,13 +14,13 @@ type HistoryEntry = { id: string; title: string; messages: any[]; versions: any;
 const COLORS = ["#7c3aed","#db2777","#059669","#ea580c","#2563eb","#0891b2","#ca8a04","#dc2626"];
 
 function loadProjects(): Project[] {
-  try { return JSON.parse(localStorage.getItem("pc:projects") ?? "[]"); } catch { return []; }
+  return readJSON<Project[]>(STORAGE_KEYS.projects, []);
 }
 function loadHistory(): HistoryEntry[] {
-  try { return JSON.parse(localStorage.getItem("pc:history") ?? "[]"); } catch { return []; }
+  return readJSON<HistoryEntry[]>(STORAGE_KEYS.history, []);
 }
-function saveProjects(p: Project[]) { localStorage.setItem("pc:projects", JSON.stringify(p)); }
-function saveHistory(h: HistoryEntry[]) { localStorage.setItem("pc:history", JSON.stringify(h)); }
+function saveProjects(p: Project[]) { writeJSON(STORAGE_KEYS.projects, p); }
+function saveHistory(h: HistoryEntry[]) { writeJSON(STORAGE_KEYS.history, h); }
 
 export default function Projects() {
   usePageTitle("Projects");
@@ -52,10 +55,7 @@ export default function Projects() {
     setHistory(updated); saveHistory(updated);
   };
 
-  const resume = (entry: HistoryEntry) => {
-    sessionStorage.setItem("pc:resume", JSON.stringify(entry));
-    navigate("/builder?resume=1");
-  };
+  const resume = (entry: HistoryEntry) => resumeInBuilder(navigate, entry);
 
   const projectSessions = (projectId: string) => history.filter(h => h.projectId === projectId);
 
@@ -107,11 +107,7 @@ export default function Projects() {
       {/* Project list */}
       {!activeProject && (
         projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <FolderOpen className="h-16 w-16 text-muted-foreground mb-4 opacity-30" />
-            <h3 className="font-semibold text-lg mb-1">No projects yet</h3>
-            <p className="text-sm text-muted-foreground">Create a project to group your sessions.</p>
-          </div>
+          <EmptyState icon={FolderOpen} title="No projects yet" description="Create a project to group your sessions." />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map(p => {

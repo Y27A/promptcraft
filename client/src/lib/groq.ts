@@ -1,3 +1,5 @@
+import { readSSEStream } from "./sse";
+
 const _k = import.meta.env.VITE_GK as string | undefined;
 const GROQ_KEY = _k ? "gsk_" + _k : undefined;
 const MODEL = "llama-3.3-70b-versatile";
@@ -210,25 +212,9 @@ export async function streamGroq(
   if (res.status === 429) throw new Error("Daily limit reached — try again tomorrow");
   if (!res.ok) throw new Error(`Generation failed (${res.status})`);
 
-  const reader = res.body!.getReader();
-  const dec = new TextDecoder();
-  let buf = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split("\n");
-    buf = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const data = line.slice(6).trim();
-      if (data === "[DONE]") { onDone(); return; }
-      try {
-        const delta = JSON.parse(data).choices?.[0]?.delta?.content ?? "";
-        if (delta) onDelta(delta);
-      } catch {}
-    }
-  }
+  await readSSEStream(res, (frame: any) => {
+    const delta = frame?.choices?.[0]?.delta?.content ?? "";
+    if (delta) onDelta(delta);
+  });
   onDone();
 }

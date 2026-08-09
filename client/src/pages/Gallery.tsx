@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Copy, Shuffle, Search, Users, Zap } from "lucide-react";
-import { toast } from "sonner";
+import { Copy, Users, Zap } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { copyToClipboard } from "@/lib/clipboard";
+import { openBuilderWith } from "@/lib/builder-nav";
+import { SearchInput } from "@/components/ui/search-input";
 
 const GALLERY = [
   { id:"g1", title:"Viral Twitter Thread Writer", category:"marketing", author:"@sara_mkts", prompt:"You are a Twitter growth strategist who has grown accounts to 100K+ followers. Write a 10-tweet thread about {topic} that hooks readers in the first tweet, delivers one actionable insight per tweet, and ends with a strong CTA. Use short punchy sentences. No filler. Every tweet must standalone." },
@@ -32,11 +34,7 @@ export default function Gallery() {
     (!search || g.title.toLowerCase().includes(search.toLowerCase()) || g.prompt.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const copy = (text: string) => { navigator.clipboard.writeText(text); toast.success("Copied!"); };
-  const remix = (prompt: string) => {
-    sessionStorage.setItem("promptcraft:prefillInput", `Remix and improve this prompt: ${prompt}`);
-    navigate("/builder?refine=1");
-  };
+  const remix = (prompt: string) => openBuilderWith(navigate, `Remix and improve this prompt: ${prompt}`);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -48,12 +46,7 @@ export default function Gallery() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search gallery…"
-            className="w-full rounded-xl border border-border bg-muted pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-        </div>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search gallery…" className="flex-1 max-w-sm" />
         <div className="flex flex-wrap gap-2">
           {CATS.map(c => (
             <button key={c} onClick={() => setCat(c)}
@@ -76,7 +69,7 @@ export default function Gallery() {
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-muted-foreground/60">{item.author}</span>
               <div className="flex gap-1.5">
-                <button onClick={() => copy(item.prompt)}
+                <button onClick={() => copyToClipboard(item.prompt)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                   <Copy className="h-3 w-3" /> Copy
                 </button>
