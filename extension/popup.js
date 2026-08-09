@@ -71,10 +71,16 @@ async function generate() {
         if (!line.startsWith("data: ")) continue;
         const data = line.slice(6).trim();
         if (data === "[DONE]") break;
+        let parsed;
         try {
-          const delta = JSON.parse(data).choices?.[0]?.delta?.content ?? "";
-          if (delta) { full += delta; outputText.textContent = full; }
-        } catch {}
+          parsed = JSON.parse(data);
+        } catch (err) {
+          console.warn("Skipping malformed SSE chunk", data, err);
+          continue;
+        }
+        if (parsed.error) throw new Error(parsed.error.message ?? "Groq returned an error");
+        const delta = parsed.choices?.[0]?.delta?.content ?? "";
+        if (delta) { full += delta; outputText.textContent = full; }
       }
     }
 
@@ -85,6 +91,7 @@ async function generate() {
       await chrome.storage.local.set({ lastPrompt: v.v1 });
     }
   } catch (e) {
+    console.error("Prompt generation failed", e);
     outputText.textContent = "Error: " + e.message;
   } finally {
     btn.disabled = false;
@@ -111,9 +118,13 @@ document.querySelectorAll(".tab").forEach(tab => {
 
 document.getElementById("btn-copy").addEventListener("click", () => {
   const text = activeV === 1 ? versions.v1 : versions.v2;
+  const btn = document.getElementById("btn-copy");
   navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById("btn-copy");
     btn.textContent = "✅ Copied!";
+    setTimeout(() => btn.textContent = "📋 Copy", 1500);
+  }).catch((err) => {
+    console.error("Clipboard write failed", err);
+    btn.textContent = "Copy failed";
     setTimeout(() => btn.textContent = "📋 Copy", 1500);
   });
 });

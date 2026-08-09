@@ -4,6 +4,7 @@ import { History as HistoryIcon, Trash2, ExternalLink, Search, MessageSquare } f
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
+import { readJSON, writeJSON } from "@/lib/storage";
 
 type HistoryEntry = {
   id: string;
@@ -14,7 +15,7 @@ type HistoryEntry = {
 };
 
 function loadHistory(): HistoryEntry[] {
-  try { return JSON.parse(localStorage.getItem("pc:history") ?? "[]"); } catch { return []; }
+  return readJSON<HistoryEntry[]>("pc:history", []);
 }
 
 export default function History() {
@@ -29,8 +30,11 @@ export default function History() {
 
   const deleteEntry = (id: string) => {
     const updated = entries.filter(e => e.id !== id);
+    if (!writeJSON("pc:history", updated)) {
+      toast.error("Couldn't delete — browser storage is unavailable");
+      return;
+    }
     setEntries(updated);
-    localStorage.setItem("pc:history", JSON.stringify(updated));
     toast.success("Session deleted");
   };
 

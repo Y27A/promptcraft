@@ -5,6 +5,7 @@ import { Plus, BookOpen, Wand2, Star, Trash2 } from "lucide-react";
 import { Page, FadeUp } from "@/components/ui/page-motion";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
+import { readJSON, writeJSON } from "@/lib/storage";
 
 const CATEGORY_COLORS: Record<string, string> = {
   writing: "text-blue-400 bg-blue-400/10 border-blue-400/20",
@@ -140,13 +141,16 @@ export default function Templates() {
   const [, navigate] = useLocation();
   const [category, setCategory] = useState("all");
   const [userTemplates, setUserTemplates] = useState<any[]>(() => {
-    try { return JSON.parse(localStorage.getItem("pc:user-templates") ?? "[]"); } catch { return []; }
+    return readJSON<any[]>("pc:user-templates", []);
   });
 
   const deleteUserTemplate = (id: string) => {
     const updated = userTemplates.filter((t: any) => t.id !== id);
+    if (!writeJSON("pc:user-templates", updated)) {
+      toast.error("Couldn't delete — browser storage is unavailable");
+      return;
+    }
     setUserTemplates(updated);
-    localStorage.setItem("pc:user-templates", JSON.stringify(updated));
     toast.success("Template deleted");
   };
 

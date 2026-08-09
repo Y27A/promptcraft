@@ -13,19 +13,24 @@ export default function Admin() {
 
   const authFetch = async (path: string, init?: RequestInit) => {
     const token = await getToken();
-    return fetch(`${API_BASE}${path}`, {
+    const res = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(init?.headers ?? {}) },
       credentials: "include",
     });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Request to ${path} failed (${res.status})${body ? `: ${body.slice(0, 200)}` : ""}`);
+    }
+    return res;
   };
 
-  const { data: settings } = useQuery({
+  const { data: settings, error: settingsError } = useQuery({
     queryKey: ["my-settings"],
     queryFn: async () => { const r = await authFetch("/api/me/settings"); return r.json(); },
   });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading, error: usersError } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => { const r = await authFetch("/api/admin/users"); return r.json(); },
     enabled: settings?.isAdmin === true,
@@ -35,7 +40,17 @@ export default function Admin() {
     mutationFn: async ({ userId, tier }: { userId: string; tier: string }) =>
       authFetch(`/api/admin/users/${userId}/tier`, { method: "PATCH", body: JSON.stringify({ tier }) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Tier updated"); },
+    onError: (err) => { console.error("Tier update failed", err); toast.error("Couldn't update the tier"); },
   });
+
+  if (settingsError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <h2 className="text-2xl font-bold mb-2">Couldn't load your account</h2>
+        <p className="text-muted-foreground">{settingsError instanceof Error ? settingsError.message : "Unknown error"}</p>
+      </div>
+    );
+  }
 
   if (!settings?.isAdmin) {
     return (
@@ -54,7 +69,11 @@ export default function Admin() {
       </h1>
       <p className="text-muted-foreground mb-8">Manage user tiers.</p>
 
-      {isLoading ? (
+      {usersError ? (
+        <p className="text-destructive text-sm">
+          Couldn't load users: {usersError instanceof Error ? usersError.message : "Unknown error"}
+        </p>
+      ) : isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
         </div>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import chroma from "chroma-js";
+import { readString, writeString } from "@/lib/storage";
 
 type ThemePref = "system" | "light" | "dark";
 type Resolved = "light" | "dark";
@@ -29,15 +30,17 @@ function applyAccent(hex: string) {
     const darker = chroma(hex).darken(2);
     const [dh, ds, dl] = darker.hsl();
     root.style.setProperty("--accent", `${Math.round(dh ?? 0)} ${Math.round(ds * 100)}% ${Math.round(dl * 100)}%`);
-  } catch {}
+  } catch (err) {
+    console.warn(`Ignoring invalid accent colour "${hex}"`, err);
+  }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themePref, setThemePrefState] = useState<ThemePref>(
-    () => (localStorage.getItem("promptcraft:themePref") as ThemePref) ?? "dark"
+    () => (readString("promptcraft:themePref", "dark") as ThemePref)
   );
   const [accentHex, setAccentState] = useState<string>(
-    () => localStorage.getItem("promptcraft:accent") ?? "#7c3aed"
+    () => readString("promptcraft:accent", "#7c3aed")
   );
 
   const getResolved = (pref: ThemePref): Resolved =>
@@ -65,12 +68,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { applyAccent(accentHex); }, [accentHex]);
 
   const setThemePref = (p: ThemePref) => {
-    localStorage.setItem("promptcraft:themePref", p);
+    writeString("promptcraft:themePref", p);
     setThemePrefState(p);
   };
 
   const setAccent = (hex: string) => {
-    localStorage.setItem("promptcraft:accent", hex);
+    writeString("promptcraft:accent", hex);
     setAccentState(hex);
   };
 

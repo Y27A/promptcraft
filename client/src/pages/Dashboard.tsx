@@ -4,14 +4,13 @@ import { Zap, FolderOpen, Clock, MessageSquare, ExternalLink, Plus } from "lucid
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useSafeUser } from "@/lib/clerk-safe";
 import { formatAge } from "@/lib/utils";
+import { readJSON } from "@/lib/storage";
 
 function getStats() {
-  try {
-    const history = JSON.parse(localStorage.getItem("pc:history") ?? "[]");
-    const projects = JSON.parse(localStorage.getItem("pc:projects") ?? "[]");
-    const totalMsgs = history.reduce((n: number, h: any) => n + (h.messages?.length ?? 0), 0);
-    return { sessions: history.length, projects: projects.length, messages: totalMsgs, recent: history.slice(0, 5) };
-  } catch { return { sessions: 0, projects: 0, messages: 0, recent: [] }; }
+  const history = readJSON<any[]>("pc:history", []);
+  const projects = readJSON<any[]>("pc:projects", []);
+  const totalMsgs = history.reduce((n: number, h: any) => n + (h.messages?.length ?? 0), 0);
+  return { sessions: history.length, projects: projects.length, messages: totalMsgs, recent: history.slice(0, 5) };
 }
 
 export default function Dashboard() {

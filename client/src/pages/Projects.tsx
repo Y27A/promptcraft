@@ -4,6 +4,7 @@ import { FolderOpen, Plus, Trash2, ExternalLink, MessageSquare, X } from "lucide
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatAge } from "@/lib/utils";
+import { readJSON, writeJSON } from "@/lib/storage";
 
 type Project = { id: string; name: string; color: string; ts: number };
 type HistoryEntry = { id: string; title: string; messages: any[]; versions: any; ts: number; projectId?: string };
@@ -11,13 +12,13 @@ type HistoryEntry = { id: string; title: string; messages: any[]; versions: any;
 const COLORS = ["#7c3aed","#db2777","#059669","#ea580c","#2563eb","#0891b2","#ca8a04","#dc2626"];
 
 function loadProjects(): Project[] {
-  try { return JSON.parse(localStorage.getItem("pc:projects") ?? "[]"); } catch { return []; }
+  return readJSON<Project[]>("pc:projects", []);
 }
 function loadHistory(): HistoryEntry[] {
-  try { return JSON.parse(localStorage.getItem("pc:history") ?? "[]"); } catch { return []; }
+  return readJSON<HistoryEntry[]>("pc:history", []);
 }
-function saveProjects(p: Project[]) { localStorage.setItem("pc:projects", JSON.stringify(p)); }
-function saveHistory(h: HistoryEntry[]) { localStorage.setItem("pc:history", JSON.stringify(h)); }
+function saveProjects(p: Project[]): boolean { return writeJSON("pc:projects", p); }
+function saveHistory(h: HistoryEntry[]): boolean { return writeJSON("pc:history", h); }
 
 export default function Projects() {
   usePageTitle("Projects");
@@ -33,7 +34,11 @@ export default function Projects() {
     if (!newName.trim()) return;
     const p: Project = { id: Date.now().toString(), name: newName.trim(), color: newColor, ts: Date.now() };
     const updated = [p, ...projects];
-    setProjects(updated); saveProjects(updated);
+    if (!saveProjects(updated)) {
+      toast.error("Couldn't create the project — browser storage is full or unavailable");
+      return;
+    }
+    setProjects(updated);
     setCreating(false); setNewName(""); setNewColor(COLORS[0]);
     toast.success("Project created");
   };
@@ -41,15 +46,23 @@ export default function Projects() {
   const deleteProject = (id: string) => {
     const updatedP = projects.filter(p => p.id !== id);
     const updatedH = history.map(h => h.projectId === id ? { ...h, projectId: undefined } : h);
-    setProjects(updatedP); saveProjects(updatedP);
-    setHistory(updatedH); saveHistory(updatedH);
+    if (!saveProjects(updatedP) || !saveHistory(updatedH)) {
+      toast.error("Couldn't delete the project — browser storage is unavailable");
+      return;
+    }
+    setProjects(updatedP);
+    setHistory(updatedH);
     if (activeProject === id) setActiveProject(null);
     toast.success("Project deleted");
   };
 
   const removeFromProject = (sessionId: string) => {
     const updated = history.map(h => h.id === sessionId ? { ...h, projectId: undefined } : h);
-    setHistory(updated); saveHistory(updated);
+    if (!saveHistory(updated)) {
+      toast.error("Couldn't update the project — browser storage is unavailable");
+      return;
+    }
+    setHistory(updated);
   };
 
   const resume = (entry: HistoryEntry) => {

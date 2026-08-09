@@ -208,9 +208,13 @@ export async function streamGroq(
   });
 
   if (res.status === 429) throw new Error("Daily limit reached — try again tomorrow");
-  if (!res.ok) throw new Error(`Generation failed (${res.status})`);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Generation failed (${res.status})${detail ? `: ${detail.slice(0, 200)}` : ""}`);
+  }
+  if (!res.body) throw new Error("Generation failed — the server returned an empty response");
 
-  const reader = res.body!.getReader();
+  const reader = res.body.getReader();
   const dec = new TextDecoder();
   let buf = "";
 
@@ -224,10 +228,16 @@ export async function streamGroq(
       if (!line.startsWith("data: ")) continue;
       const data = line.slice(6).trim();
       if (data === "[DONE]") { onDone(); return; }
+      let parsed: { choices?: { delta?: { content?: string } }[]; error?: { message?: string } };
       try {
-        const delta = JSON.parse(data).choices?.[0]?.delta?.content ?? "";
-        if (delta) onDelta(delta);
-      } catch {}
+        parsed = JSON.parse(data);
+      } catch (err) {
+        console.warn("Skipping malformed SSE chunk from Groq", { data, err });
+        continue;
+      }
+      if (parsed.error) throw new Error(parsed.error.message ?? "Generation failed");
+      const delta = parsed.choices?.[0]?.delta?.content ?? "";
+      if (delta) onDelta(delta);
     }
   }
   onDone();

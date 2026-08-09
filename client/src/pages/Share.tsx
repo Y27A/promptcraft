@@ -9,7 +9,11 @@ export default function SharePage() {
   const { token } = useParams<{ token: string }>();
 
   let content = "";
-  try { content = decodeURIComponent(escape(atob(token ?? ""))); } catch {}
+  try {
+    content = decodeURIComponent(escape(atob(token ?? "")));
+  } catch (err) {
+    console.warn("Failed to decode share token", err);
+  }
 
   if (!content) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -19,7 +23,15 @@ export default function SharePage() {
     </div>
   );
 
-  const copy = () => { navigator.clipboard.writeText(content); toast.success("Copied!"); };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Copied!");
+    } catch (err) {
+      console.error("Clipboard write failed", err);
+      toast.error("Couldn't copy — clipboard access was denied");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">

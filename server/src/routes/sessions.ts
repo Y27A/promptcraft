@@ -4,6 +4,7 @@ import { db } from "../db/client";
 import { sessions, sessionMessages } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import type { Request } from "express";
+import { parseIdParam } from "../lib/params";
 
 const router = Router();
 type AuthReq = Request & { userId: string };
@@ -27,7 +28,7 @@ router.post("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   const session = await db.query.sessions.findFirst({
     where: and(eq(sessions.id, id), eq(sessions.userId, userId)),
     with: { sessionMessages: { orderBy: (m, { asc }) => [asc(m.createdAt)] } },
@@ -38,7 +39,7 @@ router.get("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const { userId } = req as AuthReq;
-  const id = parseInt(req.params.id);
+  const id = parseIdParam(req.params.id);
   await db.delete(sessions).where(and(eq(sessions.id, id), eq(sessions.userId, userId)));
   res.status(204).send();
 });
